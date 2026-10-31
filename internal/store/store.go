@@ -67,7 +67,25 @@ func Load(path string) (*Store, error) {
 		a.Name = name
 		s.Aliases[name] = a
 	}
+	for _, a := range s.Sorted() {
+		if err := validate(a); err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+	}
 	return s, nil
+}
+
+// validate rejects hand-edited entries that cannot be navigated to safely.
+func validate(a Alias) error {
+	switch {
+	case a.Path == "":
+		return fmt.Errorf("alias %s has no path (quote dotted names: [aliases.\"my.notes\"])", a.Name)
+	case a.Worktree && a.Repo == "":
+		return fmt.Errorf("worktree alias %s has no repo", a.Name)
+	case !a.Worktree && !filepath.IsAbs(a.Path):
+		return fmt.Errorf("alias %s has a relative path: %s", a.Name, a.Path)
+	}
+	return nil
 }
 
 // Save writes the store atomically with mode 0600.

@@ -58,6 +58,42 @@ func TestLoadMalformedNamesFile(t *testing.T) {
 	}
 }
 
+func TestLoadRejectsInvalidEntries(t *testing.T) {
+	cases := []struct{ name, body, want string }{
+		{"unquoted dotted name", "[aliases.my.notes]\npath = \"/n\"\n", "alias my has no path"},
+		{"empty path", "[aliases.a]\npath = \"\"\n", "alias a has no path"},
+		{"worktree without repo", "[aliases.w]\npath = \"svc\"\nworktree = true\n", "worktree alias w has no repo"},
+		{"relative plain path", "[aliases.rel]\npath = \"some/dir\"\n", "alias rel has a relative path: some/dir"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			p := filepath.Join(t.TempDir(), "aliases.toml")
+			if err := os.WriteFile(p, []byte(c.body), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			_, err := Load(p)
+			if err == nil || !strings.Contains(err.Error(), p) || !strings.Contains(err.Error(), c.want) {
+				t.Fatalf("err = %v, want it to name %q and contain %q", err, p, c.want)
+			}
+		})
+	}
+}
+
+func TestLoadAcceptsQuotedDottedName(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "aliases.toml")
+	body := "[aliases.\"my.notes\"]\npath = \"/n\"\n\n[aliases.w]\npath = \"svc\"\nworktree = true\nrepo = \"/r/.git\"\n"
+	if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s, err := Load(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a, ok := s.Get("my.notes"); !ok || a.Path != "/n" {
+		t.Fatalf("my.notes = %+v", a)
+	}
+}
+
 func TestSaveThenLoadRoundTrip(t *testing.T) {
 	p := filepath.Join(t.TempDir(), "tele", "aliases.toml")
 	s := &Store{Aliases: map[string]Alias{}}
