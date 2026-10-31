@@ -188,13 +188,24 @@ func (a *App) pickWorktree(m Mode) error {
 	if err != nil {
 		return err
 	}
-	items := make([]picker.Item, 0, len(wts))
-	for _, wt := range wts {
-		items = append(items, picker.Item{Label: wt.Branch, Detail: wt.Path, Value: wt.Path})
-	}
+	items := worktreeItems(wts, currentWorktreeIndex(wts, a.Cwd))
 	chosen, err := picker.Run("Worktrees", items, a.Stdin, a.Stderr, a.StderrIsTTY)
 	if err != nil {
 		return err
 	}
 	return a.emitTarget(chosen.Value)
+}
+
+// worktreeItems builds the worktree picker rows, marking the current
+// worktree with "* " and indenting the others to align.
+func worktreeItems(wts []gitx.Worktree, current int) []picker.Item {
+	items := make([]picker.Item, 0, len(wts))
+	for i, wt := range wts {
+		marker := "  "
+		if i == current {
+			marker = "* "
+		}
+		items = append(items, picker.Item{Label: marker + wt.Branch, Detail: wt.Path, Value: wt.Path})
+	}
+	return items
 }

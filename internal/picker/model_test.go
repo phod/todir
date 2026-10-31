@@ -2,6 +2,8 @@ package picker
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -116,5 +118,75 @@ func TestFilterResetsCursor(t *testing.T) {
 	m = typeText(m, "a")
 	if m.Cursor() != 0 {
 		t.Fatalf("cursor after typing = %d", m.Cursor())
+	}
+}
+
+func many(n int) []Item {
+	out := make([]Item, n)
+	for i := range out {
+		v := fmt.Sprintf("item%02d", i)
+		out[i] = Item{Label: v, Detail: "/p/" + v, Value: v}
+	}
+	return out
+}
+
+// itemRows returns the rendered item lines (those naming an item).
+func itemRows(view string) []string {
+	var rows []string
+	for _, l := range strings.Split(view, "\n") {
+		if strings.Contains(l, "item") {
+			rows = append(rows, l)
+		}
+	}
+	return rows
+}
+
+func hasRow(rows []string, want string) bool {
+	for _, r := range rows {
+		if strings.Contains(r, want) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestViewFitsWindowAndFollowsCursor(t *testing.T) {
+	m := send(NewModel("T", many(20)), tea.WindowSizeMsg{Width: 80, Height: 6})
+	view := m.View()
+	if n := len(strings.Split(view, "\n")); n > 6 {
+		t.Fatalf("view has %d lines, want <= 6:\n%s", n, view)
+	}
+	if rows := itemRows(view); len(rows) != 3 || !strings.Contains(rows[0], "> item00") {
+		t.Fatalf("rows = %q", rows)
+	}
+	if !strings.HasPrefix(view, "T\n") || !strings.Contains(view, "… 17 more") {
+		t.Fatalf("view:\n%s", view)
+	}
+	for i := 1; i <= 10; i++ {
+		m = send(m, tea.KeyMsg{Type: tea.KeyDown})
+		view = m.View()
+		rows := itemRows(view)
+		if len(rows) > 3 {
+			t.Fatalf("after %d downs: %d rows", i, len(rows))
+		}
+		if want := fmt.Sprintf("> item%02d", i); !hasRow(rows, want) {
+			t.Fatalf("after %d downs cursor row %q not rendered: %q", i, want, rows)
+		}
+		if n := len(strings.Split(view, "\n")); n > 6 || !strings.HasPrefix(view, "T\n") {
+			t.Fatalf("after %d downs view:\n%s", i, view)
+		}
+	}
+	for i := 0; i < 10; i++ {
+		m = send(m, tea.KeyMsg{Type: tea.KeyUp})
+	}
+	if rows := itemRows(m.View()); !strings.Contains(rows[0], "> item00") {
+		t.Fatalf("rows after moving back up = %q", rows)
+	}
+}
+
+func TestViewShowsAllRowsBeforeWindowSize(t *testing.T) {
+	view := NewModel("T", many(20)).View()
+	if rows := itemRows(view); len(rows) != 20 || strings.Contains(view, "more") {
+		t.Fatalf("rows = %d\n%s", len(rows), view)
 	}
 }

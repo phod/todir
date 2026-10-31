@@ -312,3 +312,19 @@ func TestCurrentWorktreeIndexLongestPrefix(t *testing.T) {
 		t.Fatalf("index = %d", got)
 	}
 }
+
+func TestWorktreeItemsMarkCurrent(t *testing.T) {
+	wts := []gitx.Worktree{{Path: "/r", Branch: "main"}, {Path: "/r-feature", Branch: "feature"}}
+	items := worktreeItems(wts, currentWorktreeIndex(wts, "/r-feature/sub"))
+	if len(items) != 2 || items[0].Label != "  main" || items[1].Label != "* feature" {
+		t.Fatalf("items = %+v", items)
+	}
+	if items[1].Value != "/r-feature" || items[1].Detail != "/r-feature" {
+		t.Fatalf("item = %+v", items[1])
+	}
+	for _, it := range worktreeItems(wts, -1) {
+		if !strings.HasPrefix(it.Label, "  ") {
+			t.Fatalf("unexpected marker: %+v", it)
+		}
+	}
+}

@@ -1,6 +1,7 @@
 package picker
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -17,6 +18,8 @@ type Model struct {
 	items     []Item
 	filtered  []int // indexes into items
 	cursor    int
+	height    int // terminal rows; 0 until a WindowSizeMsg arrives
+	offset    int // index into filtered of the first rendered row
 	chosen    *Item
 	cancelled bool
 	cursorSty lipgloss.Style
@@ -44,8 +47,39 @@ func NewModel(title string, items []Item) Model {
 	return m
 }
 
+// window returns how many item rows fit: the terminal height minus the title,
+// prompt and "more" lines. Zero means no limit (height not yet known).
+func (m Model) window() int {
+	if m.height <= 0 {
+		return 0
+	}
+	if w := m.height - 3; w > 0 {
+		return w
+	}
+	return 1
+}
+
+// follow scrolls offset so the cursor row stays inside the rendered window.
+func (m *Model) follow() {
+	w := m.window()
+	if w == 0 {
+		m.offset = 0
+		return
+	}
+	if m.cursor < m.offset {
+		m.offset = m.cursor
+	}
+	if m.cursor >= m.offset+w {
+		m.offset = m.cursor - w + 1
+	}
+	if maxOff := len(m.filtered) - w; m.offset > maxOff {
+		m.offset = max(maxOff, 0)
+	}
+}
+
 func (m *Model) refilter() {
 	m.cursor = 0
+	m.offset = 0
 	q := m.input.Value()
 	m.filtered = nil // fresh slice: Model is copied by value
 	if q == "" {
@@ -66,6 +100,11 @@ func (m *Model) refilter() {
 func (m Model) Init() tea.Cmd { return textinput.Blink }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if ws, ok := msg.(tea.WindowSizeMsg); ok {
+		m.height = ws.Height
+		m.follow()
+		return m, nil
+	}
 	key, ok := msg.(tea.KeyMsg)
 	if !ok {
 		var cmd tea.Cmd
@@ -87,11 +126,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.cursor > 0 {
 			m.cursor--
 		}
+		m.follow()
 		return m, nil
 	case tea.KeyDown, tea.KeyCtrlN:
 		if m.cursor < len(m.filtered)-1 {
 			m.cursor++
 		}
+		m.follow()
 		return m, nil
 	}
 	before := m.input.Value()
@@ -103,30 +144,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// View renders the title, the prompt and a window of rows that follows the
+// cursor. It has no trailing newline, so at most height lines are drawn and
+// the renderer never pushes the title off the top of the terminal.
 func (m Model) View() string {
-	var b strings.Builder
-	b.WriteString(m.titleSty.Render(m.title))
-	b.WriteString("\n")
-	b.WriteString(m.input.View())
-	b.WriteString("\n")
-	for row, idx := range m.filtered {
-		it := m.items[idx]
+	lines := []string{m.titleSty.Render(m.title), m.input.View()}
+	start, end := 0, len(m.filtered)
+	if w := m.window(); w > 0 && end > w {
+		start = m.offset
+		end = min(start+w, len(m.filtered))
+	}
+	for row := start; row < end; row++ {
+		it := m.items[m.filtered[row]]
 		line := it.Label
 		if it.Detail != "" {
 			line += "  " + it.Detail
 		}
 		if row == m.cursor {
-			b.WriteString(m.cursorSty.Render("> " + line))
+			lines = append(lines, m.cursorSty.Render("> "+line))
 		} else {
-			b.WriteString("  " + line)
+			lines = append(lines, "  "+line)
 		}
-		b.WriteString("\n")
+	}
+	if hidden := len(m.filtered) - (end - start); hidden > 0 {
+		lines = append(lines, m.dimSty.Render(fmt.Sprintf("  … %d more", hidden)))
 	}
 	if len(m.filtered) == 0 {
-		b.WriteString(m.dimSty.Render("  no matches"))
-		b.WriteString("\n")
+		lines = append(lines, m.dimSty.Render("  no matches"))
 	}
-	return b.String()
+	return strings.Join(lines, "\n")
 }
 
 // Filtered returns the visible items in ranked order.
