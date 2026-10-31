@@ -1,4 +1,6 @@
-# tkto
+# Take To (`tkto`)
+
+Pronounced "take to". Type `tkto account-service` and read it as "take me to account-service".
 
 `tkto` is a small CLI for jumping between directories with short aliases. Its
 differentiator is worktree-aware aliases: register a path inside a git repo
