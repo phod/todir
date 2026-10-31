@@ -26,7 +26,11 @@ const Function = `todir() {
 
 // zshCompinitGuard initialises the completion system only when the user has
 // not already done so, because Cobra's zsh script ends in compdef.
-const zshCompinitGuard = "if ! (( $+functions[compdef] )); then autoload -Uz compinit && compinit; fi\n"
+// zshCompinitGuard runs compinit only when the user has not. The -i flag
+// makes compinit skip directories that compaudit flags as insecure instead of
+// prompting: this snippet is eval'd at shell start, where a prompt is
+// unwelcome and, with no terminal, fatal.
+const zshCompinitGuard = "if ! (( $+functions[compdef] )); then autoload -Uz compinit && compinit -i; fi\n"
 
 type unsupportedShellError struct{ shell string }
 

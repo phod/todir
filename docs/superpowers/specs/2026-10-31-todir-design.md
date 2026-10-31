@@ -224,8 +224,12 @@ always names the shell explicitly so startup never depends on `$SHELL`.
 
 Cobra's zsh script ends in `compdef`, which fails if the user has never run
 `compinit`. The zsh `--init` output checks whether `compdef` is defined and,
-if not, runs `autoload -Uz compinit && compinit` first. It never runs
-`compinit` when the user already has. (Author's call.)
+if not, runs `autoload -Uz compinit && compinit -i` first. It never runs
+`compinit` when the user already has. The `-i` flag makes compinit skip
+directories that `compaudit` flags as insecure rather than prompt: the snippet
+runs at shell start, and without a terminal (CI, scripts) the prompt aborts
+compinit and `compdef` is never defined. (Author's call; added 2026-10-31
+after exactly that failure on GitHub's Ubuntu runners.)
 
 ### bash versions
 

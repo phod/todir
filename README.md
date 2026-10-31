@@ -36,7 +36,10 @@ Without the function, running `todir <alias>` only prints the path plus a
 notice that the shell integration is not active.
 
 zsh users: if your `~/.zshrc` calls `compinit` itself (directly or through a
-framework such as oh-my-zsh), put the `eval` line after that call.
+framework such as oh-my-zsh), put the `eval` line after that call. If it does
+not, todir runs `compinit -i` for you, which skips any completion directory
+`compaudit` reports as insecure instead of asking about it at every shell
+start; run `compaudit` to see and fix those directories.
 
 Bash users: tab completion relies on the `bash-completion` package. Install it
 (Homebrew: `brew install bash-completion@2`; Debian/Ubuntu:

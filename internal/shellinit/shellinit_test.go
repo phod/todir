@@ -8,7 +8,7 @@ import (
 
 const fakeCompletion = "# fake completion script\n"
 
-const zshGuard = "if ! (( $+functions[compdef] )); then autoload -Uz compinit && compinit; fi"
+const zshGuard = "if ! (( $+functions[compdef] )); then autoload -Uz compinit && compinit -i; fi"
 
 func TestScriptBashContainsFunctionAndCompletion(t *testing.T) {
 	got, err := Script("bash", fakeCompletion)

@@ -99,6 +99,18 @@ func runShell(t *testing.T, sh testShell, dir, script string, extraEnv ...string
 	}
 	var args []string
 	if sh.name == "zsh" {
+		// Put a world-writable directory on fpath so compaudit fails, as it
+		// does on GitHub's Ubuntu runners and on many Homebrew installs. A
+		// compinit that tries to prompt about it aborts here, since the test
+		// shell has no terminal.
+		insecure := filepath.Join(tmp, "insecure-fpath")
+		if err := os.Mkdir(insecure, 0o777); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chmod(insecure, 0o777); err != nil {
+			t.Fatal(err)
+		}
+		script = "fpath=(" + insecure + " $fpath)\n" + script
 		args = []string{"-f", "-c", script}
 	} else {
 		args = []string{"-c", script}
