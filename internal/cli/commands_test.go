@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/phodder/tele/internal/picker"
-	"github.com/phodder/tele/internal/store"
+	"github.com/phod/tele/internal/picker"
+	"github.com/phod/tele/internal/store"
 )
 
 func TestPickAliasWithoutTTYErrors(t *testing.T) {

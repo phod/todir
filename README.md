@@ -8,7 +8,7 @@ worktree you are currently in.
 ## Install
 
 ```sh
-go install github.com/phodder/tele/cmd/tele@latest
+go install github.com/phod/tele/cmd/tele@latest
 ```
 
 Or download a release archive (darwin/linux, amd64/arm64) from the GitHub

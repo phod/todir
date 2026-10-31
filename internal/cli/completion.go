@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/phodder/tele/internal/shellinit"
+	"github.com/phod/tele/internal/shellinit"
 )
 
 // initShell prints the shell function and completion script for shell.

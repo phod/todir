@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/phodder/tele/internal/gitx"
-	"github.com/phodder/tele/internal/store"
+	"github.com/phod/tele/internal/gitx"
+	"github.com/phod/tele/internal/store"
 )
 
 func git(t *testing.T, args ...string) {

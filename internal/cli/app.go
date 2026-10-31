@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/phodder/tele/internal/picker"
+	"github.com/phod/tele/internal/picker"
 	"github.com/spf13/cobra"
 )
 

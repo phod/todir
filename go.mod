@@ -1,4 +1,4 @@
-module github.com/phodder/tele
+module github.com/phod/tele
 
 go 1.26.1
 

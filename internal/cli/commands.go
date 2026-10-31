@@ -8,9 +8,9 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/phodder/tele/internal/gitx"
-	"github.com/phodder/tele/internal/picker"
-	"github.com/phodder/tele/internal/store"
+	"github.com/phod/tele/internal/gitx"
+	"github.com/phod/tele/internal/picker"
+	"github.com/phod/tele/internal/store"
 )
 
 func (a *App) dispatch(m Mode) error {

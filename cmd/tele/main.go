@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/phodder/tele/internal/cli"
-	"github.com/phodder/tele/internal/store"
+	"github.com/phod/tele/internal/cli"
+	"github.com/phod/tele/internal/store"
 )
 
 var version = "dev"

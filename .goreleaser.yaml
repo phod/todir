@@ -19,7 +19,7 @@ checksum:
 # TODO: Homebrew tap
 # brews:
 #   - repository:
-#       owner: phodder
+#       owner: phod
 #       name: homebrew-tap
-#     homepage: https://github.com/phodder/tele
+#     homepage: https://github.com/phod/tele
 #     description: Directory aliases with worktree-aware jumping

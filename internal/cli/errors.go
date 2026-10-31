@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/phodder/tele/internal/picker"
+	"github.com/phod/tele/internal/picker"
 )
 
 // UsageError marks an error caused by invalid command-line usage (exit 2).
