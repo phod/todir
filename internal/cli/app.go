@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/phod/tkto/internal/picker"
+	"github.com/phod/todir/internal/picker"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ import (
 type App struct {
 	Stdout, Stderr io.Writer
 	Stdin          io.Reader
-	CdWriter       io.Writer // nil when TKTO_CD_FD is unset
+	CdWriter       io.Writer // nil when TODIR_CD_FD is unset
 	StderrIsTTY    bool
 	Getenv         func(string) string
 	Cwd            string
@@ -23,25 +23,25 @@ type App struct {
 	Version        string
 }
 
-// ParseCdFD parses the TKTO_CD_FD value. An empty value means unset.
+// ParseCdFD parses the TODIR_CD_FD value. An empty value means unset.
 func ParseCdFD(v string) (fd int, set bool, err error) {
 	if v == "" {
 		return 0, false, nil
 	}
 	fd, err = strconv.Atoi(v)
 	if err != nil || fd < 0 {
-		return 0, false, fmt.Errorf("invalid TKTO_CD_FD")
+		return 0, false, fmt.Errorf("invalid TODIR_CD_FD")
 	}
 	return fd, true, nil
 }
 
-// Run executes tkto with args and returns the process exit code.
+// Run executes todir with args and returns the process exit code.
 func Run(app *App, args []string) int {
 	root := newRoot(app)
 	root.SetArgs(args)
 	if err := root.Execute(); err != nil {
 		if !errors.Is(err, picker.ErrCancelled) {
-			fmt.Fprintf(app.Stderr, "tkto: %s\n", err)
+			fmt.Fprintf(app.Stderr, "todir: %s\n", err)
 		}
 		return exitCode(err)
 	}
@@ -54,7 +54,7 @@ func newRoot(app *App) *cobra.Command {
 		initShell                                                  string
 	)
 	root := &cobra.Command{
-		Use:           "tkto",
+		Use:           "todir",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Args:          cobra.ArbitraryArgs,

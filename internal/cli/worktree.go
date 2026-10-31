@@ -9,8 +9,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/phod/tkto/internal/gitx"
-	"github.com/phod/tkto/internal/store"
+	"github.com/phod/todir/internal/gitx"
+	"github.com/phod/todir/internal/store"
 )
 
 // requireGit fails fast when git is unavailable. Only worktree operations call it.

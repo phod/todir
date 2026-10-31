@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/phod/tkto/internal/gitx"
-	"github.com/phod/tkto/internal/store"
+	"github.com/phod/todir/internal/gitx"
+	"github.com/phod/todir/internal/store"
 )
 
 func git(t *testing.T, args ...string) {
@@ -144,7 +144,7 @@ func TestNavigateWorktreeOutsideRepo(t *testing.T) {
 	app.Cwd = t.TempDir()
 	code, out, errs := run(t, app, "acct")
 	s, _ := store.Load(app.ConfigPath)
-	want := "tkto: not inside a git repository; alias acct belongs to repo " + filepath.Base(main) + " (" + s.Aliases["acct"].Repo + ")\n"
+	want := "todir: not inside a git repository; alias acct belongs to repo " + filepath.Base(main) + " (" + s.Aliases["acct"].Repo + ")\n"
 	if code != 1 || out != "" || errs != want {
 		t.Fatalf("code=%d out=%q err=%q want %q", code, out, errs, want)
 	}
@@ -156,7 +156,7 @@ func TestNavigateWorktreeWrongRepo(t *testing.T) {
 	other := makeRepo(t)
 	app.Cwd = other
 	code, out, errs := run(t, app, "acct")
-	want := "tkto: in repository " + filepath.Base(other) + "; alias acct belongs to " + filepath.Base(main) + "\n"
+	want := "todir: in repository " + filepath.Base(other) + "; alias acct belongs to " + filepath.Base(main) + "\n"
 	if code != 1 || out != "" || errs != want {
 		t.Fatalf("code=%d out=%q err=%q want %q", code, out, errs, want)
 	}
@@ -202,7 +202,7 @@ func TestWorktreeOpsWithoutGit(t *testing.T) {
 		t.Fatalf("code=%d err=%q", code, errs)
 	}
 	t.Setenv("PATH", t.TempDir())
-	want := "tkto: " + gitx.ErrGitNotFound.Error() + "\n"
+	want := "todir: " + gitx.ErrGitNotFound.Error() + "\n"
 	code, _, errs := run(t, app, "-r", "-w", ".", "w2")
 	if code != 1 || errs != want {
 		t.Fatalf("register: code=%d err=%q", code, errs)

@@ -1,9 +1,9 @@
-# Take To (tkto)
+# todir
 
-Take To (tkto) is a CLI application that is used to create aliases for directories to make it
+todir is a CLI application that is used to create aliases for directories to make it
 convenient to jump between directories.
 
-One differentiator Take To has over similar CLI tools is that it can also set up worktree aware
+One differentiator todir has over similar CLI tools is that it can also set up worktree aware
 aliases.
 
 
@@ -17,15 +17,15 @@ Simple usage is limited to navigation, registration, and listing alias.
 Registration requires the `-r` or `--register` flag:
 
 ```
-tkto -r /path/to/directory my-alias
+todir -r /path/to/directory my-alias
 ```
 
-A relative or absolute directory may be used. Commonly we would see `tkto -r . my-alias`.
+A relative or absolute directory may be used. Commonly we would see `todir -r . my-alias`.
 
 Registering a name that already exists fails. Use the `-f` or `--force` flag to overwrite it:
 
 ```
-tkto -r -f . my-alias
+todir -r -f . my-alias
 ```
 
 
@@ -34,7 +34,7 @@ tkto -r -f . my-alias
 With no CLI flags, we assume usage of an alias to navigate:
 
 ```
-tkto my-alias  # Navigates the user to /path/to/directory, as per above registration example
+todir my-alias  # Navigates the user to /path/to/directory, as per above registration example
 ```
 
 Any usage of flags means we are not navigating, and that the user is trying to do something else. This is how we
@@ -46,15 +46,15 @@ avoid conflicts with alias and commands.
 Using the `-l` or `--list` flag, we can list the alias registered:
 
 ```
-tkto -l # List all registered aliases
+todir -l # List all registered aliases
 ```
 
 With an additional `-i` or `--interactive` flag, we keep this list open and allow for keyboard navigation or typing. If using the navigation, the user may navigate across
-the aliases. If typing, we should filter down the list. Pressing enter will then move the user to that directory, as if they used a `tkto my-alias` command directly.
+the aliases. If typing, we should filter down the list. Pressing enter will then move the user to that directory, as if they used a `todir my-alias` command directly.
 This is a convenience feature for uncommonly used aliases. Exit the session without navigating using the escape key.
 
 ```
-tkto -li # List all registered aliases in an interactive session
+todir -li # List all registered aliases in an interactive session
 ```
 
 
@@ -63,7 +63,7 @@ tkto -li # List all registered aliases in an interactive session
 Deregistration uses the `-d` or `--delete` flag:
 
 ```
-tkto -d my-alias # Removes the alias
+todir -d my-alias # Removes the alias
 ```
 
 ## Autocomplete
@@ -73,7 +73,7 @@ function and completion bindings. The user adds one line to their rc file and th
 rest at shell start (the pyenv approach):
 
 ```
-eval "$(tkto --init bash)"   # or zsh
+eval "$(todir --init bash)"   # or zsh
 ```
 
 
@@ -87,13 +87,13 @@ We need to explore how this could work. But some ideas:
 
 Registration could look similar to simple usage, but with an additional `-w` or `--worktree` flag. e.g.
 ```
-tkto -r -w . my-dir-alias
+todir -r -w . my-dir-alias
 ```
 This checks to see where the root of the repository is, and sets up the aliased directory to navigate within that context.
 
 Usage would then be the same as the simple case:
 ```
-tkto my-dir-alias
+todir my-dir-alias
 ```
 
 ## Error scenarios
@@ -114,7 +114,7 @@ Does git expose the ability to see what worktrees are available locally? It'd be
 
 If it is available, we should have something like the following to list the worktrees and navigating between them:
 ```
-tkto -w -l
+todir -w -l
 ```
 
 Where `-w` is also `--worktree` and `-l` is `--list`
@@ -124,9 +124,9 @@ Exit the session without navigation using the escape key.
 
 This command would only work in the relevant repo. So a user would be expected to navigate to an existing repo first, perhaps the main branch via a stable alias.
 ```
-tkto my-repo # Stable repo of main branch, worktrees are made off of this
-tkto -wli # Lists worktrees and navigate
-tkto my-dir-alias # Navigate to a directory within that worktree
+todir my-repo # Stable repo of main branch, worktrees are made off of this
+todir -wli # Lists worktrees and navigate
+todir my-dir-alias # Navigate to a directory within that worktree
 ```
 
 Some fiddliness here. So this needs further discussion. May deem as too janky to implement.

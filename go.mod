@@ -1,4 +1,4 @@
-module github.com/phod/tkto
+module github.com/phod/todir
 
 go 1.26.1
 

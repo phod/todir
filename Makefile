@@ -4,7 +4,7 @@ LDFLAGS := -X main.version=$(VERSION)
 .PHONY: build test vet install
 
 build:
-	go build -ldflags "$(LDFLAGS)" -o bin/tkto ./cmd/tkto
+	go build -ldflags "$(LDFLAGS)" -o bin/todir ./cmd/todir
 
 test:
 	go test ./...
@@ -13,4 +13,4 @@ vet:
 	go vet ./...
 
 install:
-	go install -ldflags "$(LDFLAGS)" ./cmd/tkto
+	go install -ldflags "$(LDFLAGS)" ./cmd/todir

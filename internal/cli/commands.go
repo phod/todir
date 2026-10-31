@@ -8,15 +8,15 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/phod/tkto/internal/gitx"
-	"github.com/phod/tkto/internal/picker"
-	"github.com/phod/tkto/internal/store"
+	"github.com/phod/todir/internal/gitx"
+	"github.com/phod/todir/internal/picker"
+	"github.com/phod/todir/internal/store"
 )
 
 func (a *App) dispatch(m Mode) error {
 	switch m.Kind {
 	case KindVersion:
-		fmt.Fprintf(a.Stdout, "tkto %s\n", a.Version)
+		fmt.Fprintf(a.Stdout, "todir %s\n", a.Version)
 		return nil
 	case KindRegister:
 		return a.register(m)
@@ -111,7 +111,7 @@ func (a *App) listAliases() error {
 	}
 	aliases := s.Sorted()
 	if len(aliases) == 0 {
-		fmt.Fprintln(a.Stderr, "tkto: no aliases registered; add one with: tkto -r <path> <name>")
+		fmt.Fprintln(a.Stderr, "todir: no aliases registered; add one with: todir -r <path> <name>")
 		return nil
 	}
 	// Every row has three cells so tabwriter aligns one block across plain
@@ -171,7 +171,7 @@ func (a *App) pickAlias() error {
 	}
 	aliases := s.Sorted()
 	if len(aliases) == 0 {
-		return errors.New("no aliases registered; add one with: tkto -r <path> <name>")
+		return errors.New("no aliases registered; add one with: todir -r <path> <name>")
 	}
 	items := make([]picker.Item, 0, len(aliases))
 	for _, al := range aliases {

@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/phod/tkto/internal/cli"
-	"github.com/phod/tkto/internal/store"
+	"github.com/phod/todir/internal/cli"
+	"github.com/phod/todir/internal/store"
 )
 
 var version = "dev"
@@ -15,7 +15,7 @@ var version = "dev"
 func main() {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tkto: cannot determine home directory")
+		fmt.Fprintln(os.Stderr, "todir: cannot determine home directory")
 		os.Exit(1)
 	}
 	app := &cli.App{
@@ -30,13 +30,13 @@ func main() {
 	if cwd, err := os.Getwd(); err == nil {
 		app.Cwd = cwd
 	}
-	fd, set, err := cli.ParseCdFD(os.Getenv("TKTO_CD_FD"))
+	fd, set, err := cli.ParseCdFD(os.Getenv("TODIR_CD_FD"))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tkto: invalid TKTO_CD_FD")
+		fmt.Fprintln(os.Stderr, "todir: invalid TODIR_CD_FD")
 		os.Exit(2)
 	}
 	if set {
-		app.CdWriter = os.NewFile(uintptr(fd), "tkto-cd")
+		app.CdWriter = os.NewFile(uintptr(fd), "todir-cd")
 	}
 	os.Exit(cli.Run(app, os.Args[1:]))
 }
