@@ -13,7 +13,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-const header = "# tele aliases — safe to hand-edit\n"
+const header = "# tkto aliases — safe to hand-edit\n"
 
 var (
 	ErrExists   = errors.New("alias already exists")
@@ -41,7 +41,7 @@ func ConfigPath(getenv func(string) string, home string) string {
 	if base == "" {
 		base = filepath.Join(home, ".config")
 	}
-	return filepath.Join(base, "tele", "aliases.toml")
+	return filepath.Join(base, "tkto", "aliases.toml")
 }
 
 // ValidName reports whether name is a legal alias name.

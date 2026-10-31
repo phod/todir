@@ -13,22 +13,22 @@ import (
 	"testing"
 )
 
-// teleBinDir holds the freshly built tele binary for the shell tests.
-var teleBinDir string
+// tktoBinDir holds the freshly built tkto binary for the shell tests.
+var tktoBinDir string
 
 func TestMain(m *testing.M) {
 	os.Exit(runMain(m))
 }
 
 func runMain(m *testing.M) int {
-	tmp, err := os.MkdirTemp("", "tele-shell-test-")
+	tmp, err := os.MkdirTemp("", "tkto-shell-test-")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "mkdir temp:", err)
 		return 1
 	}
 	defer os.RemoveAll(tmp)
-	teleBinDir = filepath.Join(tmp, "bin")
-	build := exec.Command("go", "build", "-o", filepath.Join(teleBinDir, "tele"), "../../cmd/tele")
+	tktoBinDir = filepath.Join(tmp, "bin")
+	build := exec.Command("go", "build", "-o", filepath.Join(tktoBinDir, "tkto"), "../../cmd/tkto")
 	if out, err := build.CombinedOutput(); err != nil {
 		fmt.Fprintf(os.Stderr, "go build: %v\n%s", err, out)
 		return 1
@@ -109,13 +109,13 @@ func runShell(t *testing.T, sh testShell, dir, script string, extraEnv ...string
 	for _, kv := range os.Environ() {
 		k, _, _ := strings.Cut(kv, "=")
 		switch k {
-		case "PATH", "HOME", "XDG_CONFIG_HOME", "ZDOTDIR", "TELE_CD_FD":
+		case "PATH", "HOME", "XDG_CONFIG_HOME", "ZDOTDIR", "TKTO_CD_FD":
 			continue
 		}
 		env = append(env, kv)
 	}
 	env = append(env,
-		"PATH="+teleBinDir+string(os.PathListSeparator)+os.Getenv("PATH"),
+		"PATH="+tktoBinDir+string(os.PathListSeparator)+os.Getenv("PATH"),
 		"HOME="+home,
 		"XDG_CONFIG_HOME="+xdg,
 	)
@@ -139,19 +139,19 @@ func shellVersion(t *testing.T, sh testShell) string {
 }
 
 const navigateScript = `set -e
-eval "$(tele --init SHELLNAME)"
-tele -r "$TARGET" foo 2>/dev/null
+eval "$(tkto --init SHELLNAME)"
+tkto -r "$TARGET" foo 2>/dev/null
 cd /
-tele foo
+tkto foo
 echo "pwd=$(pwd -P)"
-out=$(tele -l | cat)
+out=$(tkto -l | cat)
 echo "list=$out"
 echo "pwd2=$(pwd -P)"
 set +e
-tele nope 2>err.txt; echo "rc=$?"
+tkto nope 2>err.txt; echo "rc=$?"
 echo "pwd3=$(pwd -P)"
 grep -c 'shell integration is not loaded' err.txt || true
-type tele | head -1
+type tkto | head -1
 `
 
 func TestShellIntegrationNavigatesAndPropagatesExit(t *testing.T) {
@@ -192,13 +192,13 @@ func TestShellIntegrationNavigatesAndPropagatesExit(t *testing.T) {
 				t.Errorf("list line = %q, want it to contain foo", lines[1])
 			}
 			if !strings.Contains(lines[6], "function") {
-				t.Errorf("type tele = %q, want a function", lines[6])
+				t.Errorf("type tkto = %q, want a function", lines[6])
 			}
 			errTxt, err := os.ReadFile(filepath.Join(target, "err.txt"))
 			if err != nil {
 				t.Fatalf("read err.txt: %v", err)
 			}
-			if string(errTxt) != "tele: alias nope not found\n" {
+			if string(errTxt) != "tkto: alias nope not found\n" {
 				t.Errorf("err.txt = %q", errTxt)
 			}
 		})
@@ -212,12 +212,12 @@ func TestShellIntegrationCompletionLoads(t *testing.T) {
 			t.Logf("shell: %s", shellVersion(t, sh))
 			var script string
 			if sh.name == "zsh" {
-				script = `eval "$(tele --init zsh)" || exit 1
-whence -w _tele`
+				script = `eval "$(tkto --init zsh)" || exit 1
+whence -w _tkto`
 			} else {
-				script = `eval "$(tele --init bash)" || exit 1
+				script = `eval "$(tkto --init bash)" || exit 1
 if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then echo "SKIP bash $BASH_VERSION"; exit 0; fi
-complete -p tele`
+complete -p tkto`
 			}
 			out, errs, err := runShell(t, sh, t.TempDir(), script)
 			if err != nil {
@@ -231,11 +231,11 @@ complete -p tele`
 				t.Skipf("completion check needs bash >= 4 (%s); function loaded without error", strings.TrimPrefix(out, "SKIP "))
 			}
 			if sh.name == "zsh" {
-				if out != "_tele: function" {
-					t.Fatalf("whence -w _tele = %q", out)
+				if out != "_tkto: function" {
+					t.Fatalf("whence -w _tkto = %q", out)
 				}
-			} else if !strings.Contains(out, "tele") {
-				t.Fatalf("complete -p tele = %q", out)
+			} else if !strings.Contains(out, "tkto") {
+				t.Fatalf("complete -p tkto = %q", out)
 			}
 		})
 	}

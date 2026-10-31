@@ -1,4 +1,4 @@
-# Tele CLI — Design
+# Take To (tkto) — Design
 
 Date: 2026-10-31
 Status: draft for review
@@ -6,11 +6,11 @@ Human-facing spec: `HUMAN_SPEC.md` (this document refines it; where they differ,
 
 ## 1. Intent
 
-Tele is a directory-alias tool for the shell. You register a short name for a
-directory once, then `tele <name>` takes you there, with tab completion. That
+Take To is a directory-alias tool for the shell. You register a short name for a
+directory once, then `tkto <name>` takes you there, with tab completion. That
 part is well-trodden ground.
 
-The reason Tele exists is git worktrees. The author works in a monorepo with
+The reason Take To exists is git worktrees. The author works in a monorepo with
 several worktrees checked out at once, one per stream of work, often with a
 different AI coding agent in each. The repo has the same shape in every
 worktree, so "account-service" always means `services/step/account-service`
@@ -19,37 +19,37 @@ alias tool binds a name to one absolute path and is therefore useless the moment
 you switch worktrees, unless you re-register every alias in every worktree,
 which is laborious and goes stale within days.
 
-Tele's differentiator is the **worktree-aware alias**: a name bound to a path
+Take To's differentiator is the **worktree-aware alias**: a name bound to a path
 relative to a repo root, resolved at jump time against the worktree you are in.
 
 Prior art: the author's own private tool `goto`, which worked well for plain
 aliases. Its pain points shaped this spec: too many aliases to remember (hence
 the interactive picker), no worktree support, and reserved words instead of
 flags for commands (`goto add . name`), which is fragile. The name `goto` is
-taken by an existing public tool, and Tele is intended for eventual public
+taken by an existing public tool, and Take To is intended for eventual public
 distribution.
 
 ## 2. Goals, non-goals, anti-goals
 
 ### Goals
 
-- `tele <name>` jumps to a registered directory, with tab completion of names.
+- `tkto <name>` jumps to a registered directory, with tab completion of names.
 - Worktree-aware aliases resolve relative to the current worktree of the
   registered repo.
 - List registered aliases, plainly or in an interactive filterable picker.
 - List the worktrees of a repo, plainly or in an interactive picker that jumps
   to the chosen worktree. Works from inside the repo or via an alias into it.
-- One-line shell setup: add `eval "$(tele --init zsh)"` (or `bash`) to the rc
+- One-line shell setup: add `eval "$(tkto --init zsh)"` (or `bash`) to the rc
   file. The README documents it; the binary generates everything behind it.
 - Set and forget: install once, register as you go, never think about it again.
 
 ### Non-goals
 
 - Frecency, auto-tracking of visited directories, or any "smart" jumping
-  (zoxide/autojump territory). Tele only knows what you registered.
+  (zoxide/autojump territory). Take To only knows what you registered.
 - Matching across separate clones of the same repo. Worktrees made from one
   clone are the only case that matters.
-- Creating, removing, or otherwise managing worktrees. Tele only reads them.
+- Creating, removing, or otherwise managing worktrees. Take To only reads them.
 - fish, PowerShell, or other shells in v1. The design must not preclude them.
 - Windows in v1.
 
@@ -65,8 +65,8 @@ distribution.
 ## 3. Constraints
 
 - **A child process cannot change its parent shell's working directory.** The
-  user-facing `tele` is therefore a shell function, emitted by `tele --init`,
-  that wraps the `tele` binary via `command tele`. This is the pyenv/rbenv
+  user-facing `tkto` is therefore a shell function, emitted by `tkto --init`,
+  that wraps the `tkto` binary via `command tkto`. This is the pyenv/rbenv
   pattern. See §6.
 - git must be installed for any worktree feature. Plain aliases must work
   without it.
@@ -90,7 +90,7 @@ distribution.
 
 ## 5. Command surface (decided)
 
-The command is `tele`. There are no subcommands. Flags select the operation;
+The command is `tkto`. There are no subcommands. Flags select the operation;
 positional arguments supply names and paths.
 
 | Flag | Long form | Meaning |
@@ -109,22 +109,22 @@ positional arguments supply names and paths.
 
 | Invocation | Operation | Navigates? |
 |------------|-----------|------------|
-| `tele <alias>` | Jump to alias | yes |
-| `tele` | Interactive alias picker (same as `tele -li`) | yes |
-| `tele -r [-w] [-f] <path> <alias>` | Register | no |
-| `tele -d <alias>` | Delete | no |
-| `tele -l` | List aliases | no |
-| `tele -li` (or `tele -i`) | Interactive alias picker | yes |
-| `tele -wl [alias]` | List worktrees of current repo, or of the repo behind `alias` | no |
-| `tele -wli [alias]` | Interactive worktree picker | yes |
-| `tele --init <bash\|zsh>` | Print the shell function and completions (evaluated at shell start) | no |
-| `tele -v`, `tele -h` | Version / help | no |
+| `tkto <alias>` | Jump to alias | yes |
+| `tkto` | Interactive alias picker (same as `tkto -li`) | yes |
+| `tkto -r [-w] [-f] <path> <alias>` | Register | no |
+| `tkto -d <alias>` | Delete | no |
+| `tkto -l` | List aliases | no |
+| `tkto -li` (or `tkto -i`) | Interactive alias picker | yes |
+| `tkto -wl [alias]` | List worktrees of current repo, or of the repo behind `alias` | no |
+| `tkto -wli [alias]` | Interactive worktree picker | yes |
+| `tkto --init <bash\|zsh>` | Print the shell function and completions (evaluated at shell start) | no |
+| `tkto -v`, `tkto -h` | Version / help | no |
 
 Mode resolution order: `--init`, `-r`, `-d`, `-w`+`-l`, `-l`/`-i`, then
 positional-only. Any other combination (e.g. `-r -d`, `-l <alias>`, `-w` alone,
 two positionals without `-r`) is a usage error.
 
-`tele -i` without `-l` is accepted and means `tele -li`. (Author's call:
+`tkto -i` without `-l` is accepted and means `tkto -li`. (Author's call:
 forgiving, harmless.)
 
 ### Alias names
@@ -148,18 +148,18 @@ there is an obvious next step (e.g. "use -f to overwrite").
 
 ### One binary, one name, one function
 
-The binary is installed as `tele`. Shell integration defines a function also
-named `tele` which shadows the binary and reaches it with `command tele`,
+The binary is installed as `tkto`. Shell integration defines a function also
+named `tkto` which shadows the binary and reaches it with `command tkto`,
 exactly as pyenv and rbenv do. There is no second binary name.
 
 Install story (README):
 
 ```
-brew install tele            # or: go install <module>/cmd/tele@latest
-echo 'eval "$(tele --init zsh)"' >> ~/.zshrc     # or bash / ~/.bashrc
+brew install tkto            # or: go install <module>/cmd/tkto@latest
+echo 'eval "$(tkto --init zsh)"' >> ~/.zshrc     # or bash / ~/.bashrc
 ```
 
-`tele --init <shell>` prints the `tele` function and the completion script for
+`tkto --init <shell>` prints the `tkto` function and the completion script for
 that shell. Because the rc file holds only the `eval` line, the integration is
 regenerated by the installed binary at every shell start and can never go stale
 after an upgrade. Cost: one process spawn per shell start, a few milliseconds.
@@ -169,28 +169,28 @@ after an upgrade. Cost: one process spawn per shell start, a few milliseconds.
 The binary decides whether an invocation is a navigation. The function must not
 re-implement flag parsing. The mechanism:
 
-- The function runs `command tele` with the environment variable `TELE_CD_FD=3`
+- The function runs `command tkto` with the environment variable `TKTO_CD_FD=3`
   and file descriptor 3 attached to a capture. Everything on the binary's stdout
-  and stderr passes through untouched, so `tele -l | grep foo` behaves like an
+  and stderr passes through untouched, so `tkto -l | grep foo` behaves like an
   ordinary command.
 - When the binary wants the shell to change directory it writes the absolute
-  target path, followed by a newline, to the descriptor named by `TELE_CD_FD`.
+  target path, followed by a newline, to the descriptor named by `TKTO_CD_FD`.
   It writes nothing there otherwise.
 - The function runs `cd -- "$target"` if the capture is non-empty, then returns
   the binary's exit status.
-- When `TELE_CD_FD` is **not** set (binary run directly, tests, scripts),
+- When `TKTO_CD_FD` is **not** set (binary run directly, tests, scripts),
   navigation modes print the target path on stdout instead.
 
 Sketch (builder verifies on bash 3.2, bash 5, zsh 5.x):
 
 ```sh
-tele() {
-  local __tele_target __tele_rc
-  { __tele_target=$(TELE_CD_FD=3 command tele "$@" 3>&1 1>&4); __tele_rc=$?; } 4>&1
-  if [ -n "$__tele_target" ]; then
-    cd -- "$__tele_target" || return
+tkto() {
+  local __tkto_target __tkto_rc
+  { __tkto_target=$(TKTO_CD_FD=3 command tkto "$@" 3>&1 1>&4); __tkto_rc=$?; } 4>&1
+  if [ -n "$__tkto_target" ]; then
+    cd -- "$__tkto_target" || return
   fi
-  return "$__tele_rc"
+  return "$__tkto_rc"
 }
 ```
 
@@ -198,14 +198,14 @@ macOS ships bash 3.2 as `/bin/bash`; the function must work there.
 
 ### Notice when integration is not loaded
 
-If `TELE_CD_FD` is unset and stderr is a terminal, the binary is being run
+If `TKTO_CD_FD` is unset and stderr is a terminal, the binary is being run
 bare, without the shell function. For every operation other than `--init`,
 `--help`, `--version`, and the hidden `__complete`, it prints one line to
 stderr before doing its normal work:
 
 ```
-tele: shell integration is not loaded, so tele cannot change directory.
-      Add this to your shell rc file:  eval "$(tele --init zsh)"
+tkto: shell integration is not loaded, so tkto cannot change directory.
+      Add this to your shell rc file:  eval "$(tkto --init zsh)"
 ```
 
 (`zsh` or `bash` chosen from `$SHELL`; omit the second line if unknown.) The
@@ -229,7 +229,7 @@ if not, runs `autoload -Uz compinit && compinit` first. It never runs
 
 ### bash versions
 
-The `tele` function must work on macOS `/bin/bash` 3.2 and on bash 5. Tab
+The `tkto` function must work on macOS `/bin/bash` 3.2 and on bash 5. Tab
 completion must work on bash ≥ 4 and is best-effort on 3.2; a completion
 failure on 3.2 is not a release blocker, but the function must still load
 without error there. macOS CI runs the function tests against `/bin/bash`.
@@ -237,8 +237,8 @@ without error there. macOS CI runs the function tests against `/bin/bash`.
 
 ### Completion
 
-- Completion is registered for the name `tele` (the function). The generated
-  Cobra scripts call back into `tele __complete ...`; this routes through the
+- Completion is registered for the name `tkto` (the function). The generated
+  Cobra scripts call back into `tkto __complete ...`; this routes through the
   function, which passes it straight through since `__complete` is not a
   navigation. The builder verifies this works in both shells, and may rewrite
   the callback to invoke the binary directly in the emitted script if it does
@@ -251,8 +251,8 @@ without error there. macOS CI runs the function tests against `/bin/bash`.
 
 ## 7. Alias store (decided)
 
-Location: `$XDG_CONFIG_HOME/tele/aliases.toml`, defaulting to
-`~/.config/tele/aliases.toml` on both macOS and Linux (deliberately not
+Location: `$XDG_CONFIG_HOME/tkto/aliases.toml`, defaulting to
+`~/.config/tkto/aliases.toml` on both macOS and Linux (deliberately not
 `~/Library/...`). Created on first register with mode 0600, directory 0700.
 
 Writes are atomic: write to a temp file in the same directory, then rename.
@@ -260,7 +260,7 @@ Writes are atomic: write to a temp file in the same directory, then rename.
 Schema:
 
 ```toml
-# tele aliases — safe to hand-edit
+# tkto aliases — safe to hand-edit
 [aliases.notes]
 path = "/Users/phodder/notes"
 
@@ -276,9 +276,9 @@ repo = "/Users/phodder/code/monorepo/.git"
   forward slashes), `worktree = true`, and `repo` is the absolute path of the
   repo's **common git directory** (see §8).
 - Unknown keys are preserved on rewrite? **No.** Rewrite emits only known keys;
-  the file is Tele's. Comments are not preserved. (Author's call: simpler, and
+  the file is Take To's. Comments are not preserved. (Author's call: simpler, and
   the file is small.)
-- A malformed file is a runtime error naming the file; Tele never silently
+- A malformed file is a runtime error naming the file; Take To never silently
   resets it.
 
 ## 8. Worktree semantics (decided)
@@ -287,7 +287,7 @@ repo = "/Users/phodder/code/monorepo/.git"
 
 All worktrees created from one clone share a single *common git directory*
 (`<main checkout>/.git`, or the bare repo directory for a bare-repo setup).
-Tele uses its absolute path as the repo's identity. Obtain it with
+Take To uses its absolute path as the repo's identity. Obtain it with
 `git rev-parse --path-format=absolute --git-common-dir` (git ≥ 2.31); fall back
 to resolving the relative result against the cwd for older git. Builder's call
 whether to require 2.31.
@@ -297,7 +297,7 @@ Separate clones do not match each other. This is intended.
 For display, a repo is named by the directory containing the common dir
 (`monorepo` in the example), or the common dir's own basename for bare repos.
 
-### Registration (`tele -r -w <path> <alias>`)
+### Registration (`tkto -r -w <path> <alias>`)
 
 1. Require git (see §9).
 2. Resolve `<path>` to an absolute directory; must exist.
@@ -306,7 +306,7 @@ For display, a repo is named by the directory containing the common dir
 4. Store `path` as `<path>` relative to the top-level, `worktree = true`, `repo`
    = common dir.
 
-### Navigation (`tele <alias>` where alias is worktree-aware)
+### Navigation (`tkto <alias>` where alias is worktree-aware)
 
 1. Require git.
 2. From the cwd, obtain common dir and top-level.
@@ -320,7 +320,7 @@ For display, a repo is named by the directory containing the common dir
 Plain aliases never invoke git. If the stored directory no longer exists, error;
 never fall back to a parent.
 
-### Worktree listing (`tele -wl [alias]`)
+### Worktree listing (`tkto -wl [alias]`)
 
 Determine the repo to list:
 
@@ -341,7 +341,7 @@ path per §6.
 
 ## 9. Git availability
 
-Tele looks for `git` on `PATH` only when an operation needs it. Missing →
+Take To looks for `git` on `PATH` only when an operation needs it. Missing →
 `git is required for worktree aliases but was not found on PATH`, exit 1.
 Plain register, navigate, list, delete, and `--init` never touch git.
 
@@ -357,35 +357,35 @@ Both pickers share one implementation.
 - Typing filters (fuzzy, matching anywhere in name/branch or path). Arrow keys
   (and Ctrl-N/Ctrl-P) move. Enter selects. Escape or Ctrl-C cancels: exit 130,
   no output.
-- Selecting an alias resolves it exactly as `tele <name>` would, including
+- Selecting an alias resolves it exactly as `tkto <name>` would, including
   worktree errors, which are reported after the picker closes.
 - The picker lists, at most, a few hundred rows; no pagination design needed
   beyond what the list component provides.
 - Visual detail (colours, borders, prompt text) is the builder's call. No colour
   when `NO_COLOR` is set.
 
-## 11. Plain listing (`tele -l`)
+## 11. Plain listing (`tkto -l`)
 
 One alias per line, sorted by name. Columns: name, then path. Worktree aliases
 show the relative path followed by `[worktree: <repo display name>]`. Plain
 text; alignment via spaces; no colour when stdout is not a TTY or `NO_COLOR` is
-set. Empty store: prints a one-line hint on stderr about `tele -r`, exit 0.
+set. Empty store: prints a one-line hint on stderr about `tkto -r`, exit 0.
 
 ## 12. Register and delete details
 
-- `tele -r <path> <alias>`: path must be an existing directory. Alias must be
+- `tkto -r <path> <alias>`: path must be an existing directory. Alias must be
   valid (§5). Exists already → error `alias <name> already exists; use -f to
   overwrite`, exit 1, unless `-f`. On success print one line to stderr:
   `registered <name> → <path>` (worktree variant adds `(worktree-aware, repo
   <display name>)`). stdout stays empty so the function has nothing to misread.
-- `tele -d <alias>`: not found → error, exit 1. Success → one line to stderr.
+- `tkto -d <alias>`: not found → error, exit 1. Success → one line to stderr.
 - Informational output for non-navigation operations goes to stdout (lists,
   `--init`, help, version). Confirmations of mutations go to stderr. (Author's
-  call: keeps stdout clean for scripting and keeps `tele -l | wc -l` honest.)
+  call: keeps stdout clean for scripting and keeps `tkto -l | wc -l` honest.)
 
 ## 13. Performance budget
 
-`tele <plain-alias>` end to end, including the shell function, must stay under
+`tkto <plain-alias>` end to end, including the shell function, must stay under
 roughly 20 ms on the author's machine. Worktree aliases add two git invocations
 and are expected to land under 50 ms. Reading the TOML file must not dominate.
 
@@ -397,27 +397,27 @@ and are expected to land under 50 ms. Reading the TOML file must not dominate.
   and exercise registration, navigation (match, not-in-repo, wrong-repo,
   missing-directory), and worktree listing.
 - Shell tests: for each of bash and zsh, evaluate the `--init` output in a
-  fresh shell, run `tele <alias>`, and assert `pwd` changed; also assert
-  `tele -l | cat` prints the list and does not `cd`; assert the bare-binary
+  fresh shell, run `tkto <alias>`, and assert `pwd` changed; also assert
+  `tkto -l | cat` prints the list and does not `cd`; assert the bare-binary
   notice appears on stderr only when integration is absent; assert Escape in a picker
   leaves the directory unchanged (may use a pseudo-terminal or be skipped on
   CI if a TTY is unavailable, in which case it is run locally and documented).
 - CI on GitHub Actions: ubuntu-latest and macos-latest, `go test ./...`,
   `go vet`, and the shell tests.
 - Release: goreleaser (or equivalent) producing darwin/linux × amd64/arm64
-  archives containing the `tele` binary.
+  archives containing the `tkto` binary.
 - README: install, the one-line `eval` for each shell, and the five commands
   in §5 with one example each.
 
 ## 15. Left to the builder
 
-- Go module path and repository layout (`cmd/tele`, `internal/...`). The
+- Go module path and repository layout (`cmd/tkto`, `internal/...`). The
   author has not named a GitHub repo yet; use a placeholder and make it one
   edit.
 - Exact TOML library, Bubble Tea styling, table alignment code.
 - Whether to require git ≥ 2.31 or support the relative-path fallback.
 - Whether completion callbacks route through the function or use
-  `command tele` directly, provided tab completion works in both shells.
+  `command tkto` directly, provided tab completion works in both shells.
 - Error message wording beyond the content specified above.
 - How the shell tests obtain a TTY in CI, or whether they are documented as
   local-only.
@@ -426,7 +426,11 @@ and are expected to land under 50 ms. Reading the TOML file must not dominate.
 ## 16. Decision log
 
 - 2026-10-31 Builder check raised four questions. Resolved: binary ships as
-  `tele` with a same-name wrapper function (user); the earlier `--rc` hook was
+  `tkto` with a same-name wrapper function (user); the earlier `--rc` hook was
   dropped in favour of `--init` plus a README one-liner (user); bare-binary
   notice on every operation except init/help/version (user); zsh `compinit`
   handling and bash 3.2 completion scope (author's calls, §6).
+
+## 17. Rename
+
+- 2026-10-31 Renamed from `tele` to **Take To**, command `tkto`. Homebrew core already ships a `tele` formula (a Telegram terminal client), so the old name could never be published without a binary collision. `tkto` is free in Homebrew, alternates hands on every keystroke, and reads as "take me to". Historical references in this document were updated mechanically.

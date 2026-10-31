@@ -1,4 +1,4 @@
-module github.com/phod/tele
+module github.com/phod/tkto
 
 go 1.26.1
 

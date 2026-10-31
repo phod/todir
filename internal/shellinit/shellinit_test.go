@@ -15,7 +15,7 @@ func TestScriptBashContainsFunctionAndCompletion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Script: %v", err)
 	}
-	for _, want := range []string{"tele() {", "command tele", "TELE_CD_FD=3", fakeCompletion} {
+	for _, want := range []string{"tkto() {", "command tkto", "TKTO_CD_FD=3", fakeCompletion} {
 		if !strings.Contains(got, want) {
 			t.Errorf("bash script missing %q:\n%s", want, got)
 		}
@@ -33,7 +33,7 @@ func TestScriptZshHasCompinitGuardBeforeCompletion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Script: %v", err)
 	}
-	fn := strings.Index(got, "tele() {")
+	fn := strings.Index(got, "tkto() {")
 	guard := strings.Index(got, zshGuard)
 	comp := strings.Index(got, fakeCompletion)
 	if fn < 0 || guard < 0 || comp < 0 {

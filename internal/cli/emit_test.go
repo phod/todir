@@ -47,15 +47,15 @@ func TestShouldNotice(t *testing.T) {
 }
 
 func TestPrintNoticeText(t *testing.T) {
-	first := "tele: shell integration is not loaded, so tele cannot change directory.\n"
+	first := "tkto: shell integration is not loaded, so tkto cannot change directory.\n"
 	var errb bytes.Buffer
 	a := &App{Stderr: &errb, Getenv: func(string) string { return "/bin/zsh" }}
 	a.printNotice()
-	want := first + "      Add this to your shell rc file:  eval \"$(tele --init zsh)\"\n"
+	want := first + "      Add this to your shell rc file:  eval \"$(tkto --init zsh)\"\n"
 	if errb.String() != want {
 		t.Errorf("got %q want %q", errb.String(), want)
 	}
-	if !strings.Contains(errb.String(), `eval "$(tele --init zsh)"`) {
+	if !strings.Contains(errb.String(), `eval "$(tkto --init zsh)"`) {
 		t.Error("missing eval line")
 	}
 

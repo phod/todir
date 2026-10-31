@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/phod/tele/internal/picker"
-	"github.com/phod/tele/internal/store"
+	"github.com/phod/tkto/internal/picker"
+	"github.com/phod/tkto/internal/store"
 )
 
 func TestPickAliasWithoutTTYErrors(t *testing.T) {
@@ -19,7 +19,7 @@ func TestPickAliasWithoutTTYErrors(t *testing.T) {
 	}
 	app.StderrIsTTY = false
 	code, out, errs := run(t, app)
-	if code != 1 || out != "" || errs != "tele: interactive mode needs a terminal\n" {
+	if code != 1 || out != "" || errs != "tkto: interactive mode needs a terminal\n" {
 		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
 	}
 }
@@ -29,7 +29,7 @@ func TestPickAliasEmptyStoreHint(t *testing.T) {
 	app.StderrIsTTY = true
 	app.CdWriter = &bytes.Buffer{} // shell integration loaded: no notice
 	code, out, errs := run(t, app, "-li")
-	want := "tele: no aliases registered; add one with: tele -r <path> <name>\n"
+	want := "tkto: no aliases registered; add one with: tkto -r <path> <name>\n"
 	if code != 1 || out != "" || errs != want {
 		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
 	}
@@ -40,7 +40,7 @@ func TestPickWorktreeWithoutTTYErrors(t *testing.T) {
 	app.Cwd = main
 	app.StderrIsTTY = false
 	code, out, errs := run(t, app, "-wli")
-	if code != 1 || out != "" || errs != "tele: interactive mode needs a terminal\n" {
+	if code != 1 || out != "" || errs != "tkto: interactive mode needs a terminal\n" {
 		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
 	}
 }
@@ -98,7 +98,7 @@ func TestRegisterDuplicateFailsWithoutForce(t *testing.T) {
 	dir := t.TempDir()
 	run(t, app, "-r", dir, "foo")
 	code, _, errs := run(t, app, "-r", dir, "foo")
-	if code != 1 || errs != "tele: alias foo already exists; use -f to overwrite\n" {
+	if code != 1 || errs != "tkto: alias foo already exists; use -f to overwrite\n" {
 		t.Fatalf("code=%d err=%q", code, errs)
 	}
 }
@@ -120,7 +120,7 @@ func TestRegisterInvalidNameIsUsage(t *testing.T) {
 	for _, name := range []string{"-x", "foo/bar"} {
 		app, _, _ := newTestApp(t)
 		code, _, errs := run(t, app, "-r", t.TempDir(), "--", name)
-		if code != 2 || !strings.HasPrefix(errs, "tele: invalid alias name") {
+		if code != 2 || !strings.HasPrefix(errs, "tkto: invalid alias name") {
 			t.Fatalf("%s: code=%d err=%q", name, code, errs)
 		}
 		if _, err := os.Stat(app.ConfigPath); err == nil {
@@ -150,7 +150,7 @@ func TestRegisterNonDirectoryFails(t *testing.T) {
 func TestNavigateUnknownAlias(t *testing.T) {
 	app, _, _ := newTestApp(t)
 	code, _, errs := run(t, app, "nope")
-	if code != 1 || errs != "tele: alias nope not found\n" {
+	if code != 1 || errs != "tkto: alias nope not found\n" {
 		t.Fatalf("code=%d err=%q", code, errs)
 	}
 }
@@ -194,7 +194,7 @@ func TestDeleteRemovesAlias(t *testing.T) {
 func TestDeleteUnknownAlias(t *testing.T) {
 	app, _, _ := newTestApp(t)
 	code, _, errs := run(t, app, "-d", "nope")
-	if code != 1 || errs != "tele: alias nope not found\n" {
+	if code != 1 || errs != "tkto: alias nope not found\n" {
 		t.Fatalf("code=%d err=%q", code, errs)
 	}
 }
@@ -214,7 +214,7 @@ func TestListSortedPlain(t *testing.T) {
 func TestListEmptyPrintsHint(t *testing.T) {
 	app, _, _ := newTestApp(t)
 	code, out, errs := run(t, app, "-l")
-	if code != 0 || out != "" || errs != "tele: no aliases registered; add one with: tele -r <path> <name>\n" {
+	if code != 0 || out != "" || errs != "tkto: no aliases registered; add one with: tkto -r <path> <name>\n" {
 		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
 	}
 }
@@ -223,7 +223,7 @@ func TestNoticeOnlyWhenBareAndTTY(t *testing.T) {
 	app, _, _ := newTestApp(t)
 	app.StderrIsTTY = true
 	_, _, errs := run(t, app, "-l")
-	if !strings.HasPrefix(errs, "tele: shell integration is not loaded") {
+	if !strings.HasPrefix(errs, "tkto: shell integration is not loaded") {
 		t.Fatalf("expected notice, got %q", errs)
 	}
 	app.CdWriter = &bytes.Buffer{}
@@ -241,7 +241,7 @@ func TestNoticeOnlyWhenBareAndTTY(t *testing.T) {
 func TestInitEmptyValueIsUsage(t *testing.T) {
 	app, _, _ := newTestApp(t)
 	code, _, errs := run(t, app, "--init", "")
-	if code != 2 || errs != "tele: --init requires a shell name: bash or zsh\n" {
+	if code != 2 || errs != "tkto: --init requires a shell name: bash or zsh\n" {
 		t.Fatalf("code=%d err=%q", code, errs)
 	}
 }
@@ -249,7 +249,7 @@ func TestInitEmptyValueIsUsage(t *testing.T) {
 func TestInitBadShellIsUsage(t *testing.T) {
 	app, _, _ := newTestApp(t)
 	code, out, errs := run(t, app, "--init", "fish")
-	want := "tele: unsupported shell \"fish\"; supported: bash, zsh\n"
+	want := "tkto: unsupported shell \"fish\"; supported: bash, zsh\n"
 	if code != 2 || out != "" || errs != want {
 		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
 	}
@@ -260,7 +260,7 @@ func TestInitZshToStdoutNoNotice(t *testing.T) {
 	app.StderrIsTTY = true
 	app.CdWriter = nil
 	code, out, errs := run(t, app, "--init", "zsh")
-	if code != 0 || !strings.Contains(out, "tele() {") || errs != "" {
+	if code != 0 || !strings.Contains(out, "tkto() {") || errs != "" {
 		t.Fatalf("code=%d err=%q out=%q", code, errs, out)
 	}
 }

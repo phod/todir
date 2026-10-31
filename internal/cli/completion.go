@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/phod/tele/internal/shellinit"
+	"github.com/phod/tkto/internal/shellinit"
 )
 
 // initShell prints the shell function and completion script for shell.
@@ -35,7 +35,7 @@ func (a *App) initShell(shell string) error {
 	return err
 }
 
-// completeArgs supplies dynamic completions for tele's positional arguments:
+// completeArgs supplies dynamic completions for tkto's positional arguments:
 // directories for the <path> of -r, nothing for its <name>, and alias names
 // everywhere else.
 func (a *App) completeArgs(cmd *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {

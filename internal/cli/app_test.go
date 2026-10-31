@@ -26,7 +26,7 @@ func TestRunVersionPrintsToStdout(t *testing.T) {
 	if code := Run(app, []string{"--version"}); code != 0 {
 		t.Fatalf("exit = %d, want 0", code)
 	}
-	if got := out.String(); got != "tele 1.2.3\n" {
+	if got := out.String(); got != "tkto 1.2.3\n" {
 		t.Fatalf("stdout = %q", got)
 	}
 }
@@ -36,7 +36,7 @@ func TestRunUnknownFlagIsUsageError(t *testing.T) {
 	if code := Run(app, []string{"--bogus"}); code != 2 {
 		t.Fatalf("exit = %d, want 2", code)
 	}
-	if !strings.HasPrefix(errb.String(), "tele: ") {
+	if !strings.HasPrefix(errb.String(), "tkto: ") {
 		t.Fatalf("stderr = %q", errb.String())
 	}
 }
@@ -62,7 +62,7 @@ func TestInitWithoutShellListsShells(t *testing.T) {
 		if code := Run(app, args); code != 2 {
 			t.Fatalf("%v: exit = %d, want 2", args, code)
 		}
-		if got := errb.String(); got != "tele: --init requires a shell name: bash or zsh\n" || out.Len() != 0 {
+		if got := errb.String(); got != "tkto: --init requires a shell name: bash or zsh\n" || out.Len() != 0 {
 			t.Fatalf("%v: stderr = %q stdout = %q", args, got, out.String())
 		}
 	}

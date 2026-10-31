@@ -1,4 +1,4 @@
-// Package shellinit renders the shell integration printed by `tele --init`.
+// Package shellinit renders the shell integration printed by `tkto --init`.
 // It knows nothing about Cobra: the completion script is passed in as text.
 package shellinit
 
@@ -10,17 +10,17 @@ import (
 // ErrUnsupportedShell is returned by Script for shells other than bash and zsh.
 var ErrUnsupportedShell = errors.New("unsupported shell")
 
-// Function is the `tele` shell function. It shadows the binary, runs it with
-// TELE_CD_FD=3 so navigation targets arrive on fd 3 while stdout and stderr
+// Function is the `tkto` shell function. It shadows the binary, runs it with
+// TKTO_CD_FD=3 so navigation targets arrive on fd 3 while stdout and stderr
 // pass through, cds when a target was written, and returns the binary's exit
 // status. It must work on bash 3.2, bash 5 and zsh 5.x.
-const Function = `tele() {
-  local __tele_target __tele_rc
-  { __tele_target=$(TELE_CD_FD=3 command tele "$@" 3>&1 1>&4); __tele_rc=$?; } 4>&1
-  if [ -n "$__tele_target" ]; then
-    cd -- "$__tele_target" || return
+const Function = `tkto() {
+  local __tkto_target __tkto_rc
+  { __tkto_target=$(TKTO_CD_FD=3 command tkto "$@" 3>&1 1>&4); __tkto_rc=$?; } 4>&1
+  if [ -n "$__tkto_target" ]; then
+    cd -- "$__tkto_target" || return
   fi
-  return "$__tele_rc"
+  return "$__tkto_rc"
 }
 `
 

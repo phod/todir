@@ -15,11 +15,11 @@ func TestConfigPathXDG(t *testing.T) {
 		}
 		return ""
 	}
-	if got, want := ConfigPath(get, "/home/u"), filepath.Join("/x", "tele", "aliases.toml"); got != want {
+	if got, want := ConfigPath(get, "/home/u"), filepath.Join("/x", "tkto", "aliases.toml"); got != want {
 		t.Fatalf("got %q want %q", got, want)
 	}
 	none := func(string) string { return "" }
-	if got, want := ConfigPath(none, "/home/u"), filepath.Join("/home/u", ".config", "tele", "aliases.toml"); got != want {
+	if got, want := ConfigPath(none, "/home/u"), filepath.Join("/home/u", ".config", "tkto", "aliases.toml"); got != want {
 		t.Fatalf("got %q want %q", got, want)
 	}
 }
@@ -95,7 +95,7 @@ func TestLoadAcceptsQuotedDottedName(t *testing.T) {
 }
 
 func TestSaveThenLoadRoundTrip(t *testing.T) {
-	p := filepath.Join(t.TempDir(), "tele", "aliases.toml")
+	p := filepath.Join(t.TempDir(), "tkto", "aliases.toml")
 	s := &Store{Aliases: map[string]Alias{}}
 	if err := s.Put(Alias{Name: "plain", Path: "/a/b"}, false); err != nil {
 		t.Fatal(err)
@@ -124,7 +124,7 @@ func TestSaveThenLoadRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(string(b), "# tele aliases — safe to hand-edit\n") {
+	if !strings.HasPrefix(string(b), "# tkto aliases — safe to hand-edit\n") {
 		t.Errorf("missing header: %q", b)
 	}
 	got, err := Load(p)

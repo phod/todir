@@ -26,9 +26,9 @@ func ShouldNotice(k Kind, cdWriterSet, stderrIsTTY bool) bool {
 
 // printNotice writes the shell-integration notice to Stderr.
 func (a *App) printNotice() {
-	fmt.Fprintln(a.Stderr, "tele: shell integration is not loaded, so tele cannot change directory.")
+	fmt.Fprintln(a.Stderr, "tkto: shell integration is not loaded, so tkto cannot change directory.")
 	shell := filepath.Base(a.Getenv("SHELL"))
 	if shell == "bash" || shell == "zsh" {
-		fmt.Fprintf(a.Stderr, "      Add this to your shell rc file:  eval \"$(tele --init %s)\"\n", shell)
+		fmt.Fprintf(a.Stderr, "      Add this to your shell rc file:  eval \"$(tkto --init %s)\"\n", shell)
 	}
 }

@@ -1,8 +1,8 @@
 version: 2
 
 builds:
-  - main: ./cmd/tele
-    binary: tele
+  - main: ./cmd/tkto
+    binary: tkto
     goos: [darwin, linux]
     goarch: [amd64, arm64]
     env:
@@ -11,7 +11,7 @@ builds:
       - -s -w -X main.version={{.Version}}
 
 archives:
-  - name_template: tele_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+  - name_template: tkto_{{ .Version }}_{{ .Os }}_{{ .Arch }}
 
 checksum:
   name_template: checksums.txt
@@ -21,5 +21,5 @@ checksum:
 #   - repository:
 #       owner: phod
 #       name: homebrew-tap
-#     homepage: https://github.com/phod/tele
+#     homepage: https://github.com/phod/tkto
 #     description: Directory aliases with worktree-aware jumping
