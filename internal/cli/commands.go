@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"text/tabwriter"
 
+	"github.com/phodder/tele/internal/gitx"
 	"github.com/phodder/tele/internal/store"
 )
 
@@ -33,7 +34,9 @@ func (a *App) loadStore() (*store.Store, error) {
 
 func (a *App) register(m Mode) error {
 	if m.Worktree {
-		return usagef("not implemented")
+		if err := requireGit(); err != nil {
+			return err
+		}
 	}
 	if !store.ValidName(m.Alias) {
 		return usagef("invalid alias name %q: use letters, digits, '.', '_' or '-' and start with a letter or digit", m.Alias)
@@ -52,6 +55,9 @@ func (a *App) register(m Mode) error {
 	}
 	if !info.IsDir() {
 		return fmt.Errorf("not a directory: %s", p)
+	}
+	if m.Worktree {
+		return a.registerWorktree(p, m.Alias, m.Force)
 	}
 	s, err := a.loadStore()
 	if err != nil {
@@ -100,7 +106,11 @@ func (a *App) listAliases() error {
 	}
 	tw := tabwriter.NewWriter(a.Stdout, 0, 0, 2, ' ', 0)
 	for _, al := range aliases {
-		fmt.Fprintf(tw, "%s\t%s\n", al.Name, al.Path)
+		if al.Worktree {
+			fmt.Fprintf(tw, "%s\t%s\t[worktree: %s]\n", al.Name, al.Path, gitx.DisplayName(al.Repo))
+		} else {
+			fmt.Fprintf(tw, "%s\t%s\n", al.Name, al.Path)
+		}
 	}
 	return tw.Flush()
 }
@@ -123,6 +133,9 @@ func (a *App) navigate(name string) error {
 
 // resolveAlias returns the directory an alias points at.
 func (a *App) resolveAlias(al store.Alias) (string, error) {
+	if al.Worktree {
+		return a.resolveWorktreeAlias(al)
+	}
 	info, err := os.Stat(al.Path)
 	if err != nil || !info.IsDir() {
 		return "", fmt.Errorf("directory for alias %s does not exist: %s", al.Name, al.Path)
