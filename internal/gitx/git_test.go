@@ -91,6 +91,17 @@ func TestDiscoverNotRepo(t *testing.T) {
 	}
 }
 
+func TestDiscoverNotRepoNonEnglishLocale(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GIT_CEILING_DIRECTORIES", filepath.Dir(dir))
+	t.Setenv("LANG", "de_DE.UTF-8")
+	t.Setenv("LC_ALL", "de_DE.UTF-8")
+	_, err := Discover(dir)
+	if !errors.Is(err, ErrNotRepo) {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestWorktreesListsBoth(t *testing.T) {
 	main := makeRepo(t)
 	addWorktree(t, main, "feature")
