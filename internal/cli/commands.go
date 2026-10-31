@@ -24,6 +24,8 @@ func (a *App) dispatch(m Mode) error {
 		return a.listAliases()
 	case KindNavigate:
 		return a.navigate(m.Alias)
+	case KindListWorktrees:
+		return a.listWorktrees(m)
 	}
 	return usagef("not implemented")
 }

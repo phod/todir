@@ -239,3 +239,76 @@ func TestListShowsWorktreeMarker(t *testing.T) {
 		t.Fatalf("plain row = %q", lines[1])
 	}
 }
+
+func TestListWorktreesFromInsideRepo(t *testing.T) {
+	app, _, linked := wtFixture(t)
+	app.Cwd = linked
+	code, out, errs := run(t, app, "-wl")
+	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+	if code != 0 || errs != "" || len(lines) != 2 {
+		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
+	}
+	if !strings.Contains(lines[0], "main") || strings.HasPrefix(lines[0], "*") {
+		t.Fatalf("first line = %q", lines[0])
+	}
+	if !strings.HasPrefix(lines[1], "*") || !strings.Contains(lines[1], "feature") {
+		t.Fatalf("second line = %q", lines[1])
+	}
+}
+
+func TestListWorktreesViaPlainAlias(t *testing.T) {
+	app, main, _ := wtFixture(t)
+	app.Cwd = main
+	if code, _, errs := run(t, app, "-r", ".", "repo"); code != 0 {
+		t.Fatalf("register: %d %q", code, errs)
+	}
+	app.Cwd = t.TempDir()
+	code, out, errs := run(t, app, "-wl", "repo")
+	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+	if code != 0 || errs != "" || len(lines) != 2 || strings.Contains(out, "*") {
+		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
+	}
+}
+
+func TestListWorktreesViaWorktreeAlias(t *testing.T) {
+	app, main, _ := wtFixture(t)
+	registerAcct(t, app, main)
+	app.Cwd = t.TempDir()
+	code, out, errs := run(t, app, "-wl", "acct")
+	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+	if code != 0 || errs != "" || len(lines) != 2 {
+		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
+	}
+}
+
+func TestListWorktreesOutsideRepoNoAlias(t *testing.T) {
+	app, _, _ := wtFixture(t)
+	app.Cwd = t.TempDir()
+	code, _, errs := run(t, app, "-wl")
+	if code != 1 || !strings.Contains(errs, "not inside a git repository") {
+		t.Fatalf("code=%d err=%q", code, errs)
+	}
+}
+
+func TestListWorktreesAliasNotInRepo(t *testing.T) {
+	app, _, _ := wtFixture(t)
+	app.Cwd = t.TempDir()
+	plain := t.TempDir()
+	if code, _, errs := run(t, app, "-r", plain, "plain"); code != 0 {
+		t.Fatalf("register: %d %q", code, errs)
+	}
+	code, _, errs := run(t, app, "-wl", "plain")
+	if code != 1 || !strings.Contains(errs, "alias plain does not point into a git repository") {
+		t.Fatalf("code=%d err=%q", code, errs)
+	}
+}
+
+func TestCurrentWorktreeIndexLongestPrefix(t *testing.T) {
+	wts := []gitx.Worktree{{Path: "/r"}, {Path: "/r-feature"}}
+	if got := currentWorktreeIndex(wts, "/r-feature/x"); got != 1 {
+		t.Fatalf("index = %d", got)
+	}
+	if got := currentWorktreeIndex(wts, "/other"); got != -1 {
+		t.Fatalf("index = %d", got)
+	}
+}

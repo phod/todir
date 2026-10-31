@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/phodder/tele/internal/gitx"
 	"github.com/phodder/tele/internal/store"
@@ -94,4 +96,102 @@ func (a *App) resolveWorktreeAlias(al store.Alias) (string, error) {
 		return "", fmt.Errorf("directory for alias %s does not exist in this worktree: %s", al.Name, target)
 	}
 	return target, nil
+}
+
+// worktreeRepoDir picks the directory whose repository -wl should list.
+func (a *App) worktreeRepoDir(alias string) (string, error) {
+	if alias == "" {
+		if _, err := gitx.Discover(a.Cwd); err != nil {
+			return "", err
+		}
+		return a.Cwd, nil
+	}
+	s, err := a.loadStore()
+	if err != nil {
+		return "", err
+	}
+	al, ok := s.Get(alias)
+	if !ok {
+		return "", fmt.Errorf("alias %s not found", alias)
+	}
+	if al.Worktree {
+		return al.Repo, nil
+	}
+	if _, err := gitx.Discover(al.Path); err != nil {
+		if errors.Is(err, gitx.ErrNotRepo) {
+			return "", fmt.Errorf("alias %s does not point into a git repository", alias)
+		}
+		return "", err
+	}
+	return al.Path, nil
+}
+
+// worktreeRows lists the worktrees of the repo at dir, main first then by branch.
+func (a *App) worktreeRows(dir string) ([]gitx.Worktree, error) {
+	wts, err := gitx.Worktrees(dir)
+	if err != nil {
+		return nil, err
+	}
+	sort.SliceStable(wts, func(i, j int) bool {
+		if wts[i].Main != wts[j].Main {
+			return wts[i].Main
+		}
+		return wts[i].Branch < wts[j].Branch
+	})
+	return wts, nil
+}
+
+func pathWithin(p, cwd string) bool {
+	p, cwd = filepath.Clean(p), filepath.Clean(cwd)
+	return cwd == p || strings.HasPrefix(cwd, strings.TrimSuffix(p, string(filepath.Separator))+string(filepath.Separator))
+}
+
+// currentWorktreeIndex returns the index of the worktree containing cwd
+// (longest matching path), or -1.
+func currentWorktreeIndex(wts []gitx.Worktree, cwd string) int {
+	realCwd, cerr := filepath.EvalSymlinks(cwd)
+	best, bestLen := -1, -1
+	for i, w := range wts {
+		match := pathWithin(w.Path, cwd)
+		if !match && cerr == nil {
+			if rp, err := filepath.EvalSymlinks(w.Path); err == nil {
+				match = pathWithin(rp, realCwd)
+			}
+		}
+		if match && len(w.Path) > bestLen {
+			best, bestLen = i, len(w.Path)
+		}
+	}
+	return best
+}
+
+// formatWorktrees renders marker, branch and path columns.
+func formatWorktrees(wts []gitx.Worktree, current int) string {
+	var b strings.Builder
+	tw := tabwriter.NewWriter(&b, 0, 4, 2, ' ', 0)
+	for i, w := range wts {
+		marker := " "
+		if i == current {
+			marker = "*"
+		}
+		fmt.Fprintf(tw, "%s\t%s\t%s\n", marker, w.Branch, w.Path)
+	}
+	tw.Flush()
+	return b.String()
+}
+
+func (a *App) listWorktrees(m Mode) error {
+	if err := requireGit(); err != nil {
+		return err
+	}
+	dir, err := a.worktreeRepoDir(m.Alias)
+	if err != nil {
+		return err
+	}
+	wts, err := a.worktreeRows(dir)
+	if err != nil {
+		return err
+	}
+	fmt.Fprint(a.Stdout, formatWorktrees(wts, currentWorktreeIndex(wts, a.Cwd)))
+	return nil
 }
