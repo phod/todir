@@ -12,9 +12,12 @@ go install github.com/phodder/tele/cmd/tele@latest
 ```
 
 Or download a release archive (darwin/linux, amd64/arm64) from the GitHub
-releases page and put `tele` on your `PATH`. A Homebrew tap is coming later.
+releases page and put `tele` on your `PATH`. The release workflow builds these
+archives (plus `checksums.txt`) with GoReleaser whenever a `v*` tag is pushed.
+A Homebrew tap is coming later.
 
-git is only needed for the worktree features.
+git is only needed for the worktree features. git 2.31 or newer is the tested
+floor; older versions may work.
 
 ## Shell setup
 
@@ -29,6 +32,9 @@ eval "$(tele --init bash)"  # ~/.bashrc
 The binary generates the function and tab completions at every shell start.
 Without the function, running `tele <alias>` only prints the path plus a
 notice that the shell integration is not active.
+
+zsh users: if your `~/.zshrc` calls `compinit` itself (directly or through a
+framework such as oh-my-zsh), put the `eval` line after that call.
 
 Bash users: tab completion relies on the `bash-completion` package. Install it
 (Homebrew: `brew install bash-completion@2`; Debian/Ubuntu:
@@ -50,7 +56,13 @@ tele -r -w ~/code/repo/services/web web   # register a worktree-aware alias
 tele -wl                        # list worktrees of the current repo
 tele -wl web                    # list worktrees of the repo behind an alias
 tele -wli [alias]               # pick a worktree interactively
+
+tele -v                         # print the version
+tele -h                         # show help
 ```
+
+Short flags combine: `tele -li`, `tele -wl`, `tele -wli` are the same as
+`tele -l -i`, `tele -w -l`, `tele -w -l -i`.
 
 ### Worktree aliases
 
@@ -73,4 +85,21 @@ current one marked.
 
 Aliases live in `$XDG_CONFIG_HOME/tele/aliases.toml` (default
 `~/.config/tele/aliases.toml`). The file is plain TOML and safe to edit by
-hand.
+hand:
+
+```toml
+[aliases.api]
+path = "/Users/me/code/api"
+
+[aliases."my.notes"]   # names containing dots must be quoted
+path = "/Users/me/notes"
+
+[aliases.web]
+path = "services/web"
+worktree = true
+repo = "/Users/me/code/repo/.git"
+```
+
+An unquoted dotted name such as `[aliases.my.notes]` is read as a nested
+table and rejected. Plain aliases need an absolute `path`; worktree aliases
+need a `repo`.
