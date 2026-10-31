@@ -7,18 +7,24 @@ import (
 	"golang.org/x/term"
 
 	"github.com/phodder/tele/internal/cli"
+	"github.com/phodder/tele/internal/store"
 )
 
 var version = "dev"
 
 func main() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "tele: cannot determine home directory")
+		os.Exit(1)
+	}
 	app := &cli.App{
 		Stdout:      os.Stdout,
 		Stderr:      os.Stderr,
 		Stdin:       os.Stdin,
 		StderrIsTTY: term.IsTerminal(int(os.Stderr.Fd())),
 		Getenv:      os.Getenv,
-		ConfigPath:  "", // set from the store package in Task 2
+		ConfigPath:  store.ConfigPath(os.Getenv, home),
 		Version:     version,
 	}
 	if cwd, err := os.Getwd(); err == nil {
