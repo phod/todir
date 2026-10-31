@@ -54,11 +54,20 @@ func newRoot(app *App) *cobra.Command {
 		SilenceErrors: true,
 		Args:          cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if version {
-				fmt.Fprintf(app.Stdout, "tele %s\n", app.Version)
-				return nil
+			if cmd.Flags().Changed("init") && initShell == "" {
+				return usagef("--init requires a shell name: bash or zsh")
 			}
-			return usagef("unknown mode")
+			m, err := Resolve(Flags{
+				Register: register, Worktree: worktree, Force: force, List: list,
+				Interactive: interactive, Delete: del, Version: version, Init: initShell,
+			}, args)
+			if err != nil {
+				return err
+			}
+			if ShouldNotice(m.Kind, app.CdWriter != nil, app.StderrIsTTY) {
+				app.printNotice()
+			}
+			return app.dispatch(m)
 		},
 	}
 	root.CompletionOptions.DisableDefaultCmd = true
