@@ -28,21 +28,13 @@ func (a *App) registerWorktree(absPath, name string, force bool) error {
 	if err != nil {
 		return err
 	}
-	rel, err := filepath.Rel(repo.TopLevel, absPath)
+	rel, ok, err := relWithin(repo.TopLevel, absPath)
 	if err != nil {
 		return err
 	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		// absPath was given through a symlink; git reports the real top level.
-		real, rerr := filepath.EvalSymlinks(absPath)
-		if rerr != nil {
-			return rerr
-		}
-		if rel, err = filepath.Rel(repo.TopLevel, real); err != nil {
-			return err
-		}
+	if !ok {
+		return fmt.Errorf("alias %s has an invalid worktree path: %s", name, rel)
 	}
-	rel = filepath.ToSlash(rel)
 	s, err := a.loadStore()
 	if err != nil {
 		return err
@@ -58,6 +50,29 @@ func (a *App) registerWorktree(absPath, name string, force bool) error {
 	}
 	fmt.Fprintf(a.Stderr, "registered %s → %s (worktree-aware, repo %s)\n", name, rel, gitx.DisplayName(repo.CommonDir))
 	return nil
+}
+
+func escapes(rel string) bool {
+	return rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+// relWithin returns absPath relative to top in slash form, retrying through
+// symlinks (git reports the real top level). ok is false when the path still
+// lies outside top.
+func relWithin(top, absPath string) (rel string, ok bool, err error) {
+	if rel, err = filepath.Rel(top, absPath); err != nil {
+		return "", false, err
+	}
+	if escapes(rel) {
+		real, rerr := filepath.EvalSymlinks(absPath)
+		if rerr != nil {
+			return "", false, rerr
+		}
+		if rel, err = filepath.Rel(top, real); err != nil {
+			return "", false, err
+		}
+	}
+	return filepath.ToSlash(rel), !escapes(rel), nil
 }
 
 // sameRepo reports whether two common dirs identify the same repository.

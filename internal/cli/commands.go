@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/phodder/tele/internal/gitx"
@@ -113,15 +114,26 @@ func (a *App) listAliases() error {
 		fmt.Fprintln(a.Stderr, "tele: no aliases registered; add one with: tele -r <path> <name>")
 		return nil
 	}
-	tw := tabwriter.NewWriter(a.Stdout, 0, 0, 2, ' ', 0)
+	// Every row has three cells so tabwriter aligns one block across plain
+	// and worktree rows; the padding left after an empty third cell is trimmed.
+	var buf strings.Builder
+	tw := tabwriter.NewWriter(&buf, 0, 0, 2, ' ', 0)
 	for _, al := range aliases {
+		note := ""
 		if al.Worktree {
-			fmt.Fprintf(tw, "%s\t%s\t[worktree: %s]\n", al.Name, al.Path, gitx.DisplayName(al.Repo))
-		} else {
-			fmt.Fprintf(tw, "%s\t%s\n", al.Name, al.Path)
+			note = "[worktree: " + gitx.DisplayName(al.Repo) + "]"
+		}
+		fmt.Fprintf(tw, "%s\t%s\t%s\n", al.Name, al.Path, note)
+	}
+	if err := tw.Flush(); err != nil {
+		return err
+	}
+	for _, line := range strings.SplitAfter(buf.String(), "\n") {
+		if line != "" {
+			fmt.Fprintln(a.Stdout, strings.TrimRight(line, " \n"))
 		}
 	}
-	return tw.Flush()
+	return nil
 }
 
 func (a *App) navigate(name string) error {

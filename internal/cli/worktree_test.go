@@ -240,6 +240,38 @@ func TestListShowsWorktreeMarker(t *testing.T) {
 	}
 }
 
+func TestListAlignsMixedRows(t *testing.T) {
+	app, main, _ := wtFixture(t)
+	app.Cwd = filepath.Join(main, filepath.FromSlash(svc))
+	if code, _, errs := run(t, app, "-r", "-w", ".", "a"); code != 0 {
+		t.Fatalf("register a: %d %q", code, errs)
+	}
+	if code, _, errs := run(t, app, "-r", t.TempDir(), "b"); code != 0 {
+		t.Fatalf("register b: %d %q", code, errs)
+	}
+	app.Cwd = main
+	if code, _, errs := run(t, app, "-r", "-w", ".", "c"); code != 0 {
+		t.Fatalf("register c: %d %q", code, errs)
+	}
+	code, out, errs := run(t, app, "-l")
+	if code != 0 || errs != "" {
+		t.Fatalf("code=%d err=%q", code, errs)
+	}
+	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+	if len(lines) != 3 {
+		t.Fatalf("out=%q", out)
+	}
+	ia, ic := strings.Index(lines[0], "[worktree:"), strings.Index(lines[2], "[worktree:")
+	if ia < 0 || ia != ic {
+		t.Fatalf("worktree column not aligned across a plain row (%d vs %d):\n%s", ia, ic, out)
+	}
+	for _, l := range lines {
+		if l != strings.TrimRight(l, " ") {
+			t.Fatalf("trailing whitespace in %q", l)
+		}
+	}
+}
+
 func TestListWorktreesFromInsideRepo(t *testing.T) {
 	app, _, linked := wtFixture(t)
 	app.Cwd = linked
@@ -310,6 +342,32 @@ func TestCurrentWorktreeIndexLongestPrefix(t *testing.T) {
 	}
 	if got := currentWorktreeIndex(wts, "/other"); got != -1 {
 		t.Fatalf("index = %d", got)
+	}
+}
+
+func TestRelWithin(t *testing.T) {
+	top := norm(t, t.TempDir())
+	sub := filepath.Join(top, "a", "b")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if rel, ok, err := relWithin(top, sub); err != nil || !ok || rel != "a/b" {
+		t.Fatalf("inside: %q %v %v", rel, ok, err)
+	}
+	if rel, ok, err := relWithin(top, top); err != nil || !ok || rel != "." {
+		t.Fatalf("top: %q %v %v", rel, ok, err)
+	}
+	link := filepath.Join(t.TempDir(), "link")
+	if err := os.Symlink(sub, link); err != nil {
+		t.Fatal(err)
+	}
+	if rel, ok, err := relWithin(top, link); err != nil || !ok || rel != "a/b" {
+		t.Fatalf("via symlink: %q %v %v", rel, ok, err)
+	}
+	outside := t.TempDir()
+	rel, ok, err := relWithin(top, outside)
+	if err != nil || ok || !strings.HasPrefix(rel, "../") {
+		t.Fatalf("outside: %q %v %v", rel, ok, err)
 	}
 }
 
