@@ -31,6 +31,8 @@ func (a *App) dispatch(m Mode) error {
 		return a.pickWorktree(m)
 	case KindListWorktrees:
 		return a.listWorktrees(m)
+	case KindInit:
+		return a.initShell(m.Shell)
 	}
 	return usagef("not implemented")
 }

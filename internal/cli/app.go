@@ -91,5 +91,7 @@ func newRoot(app *App) *cobra.Command {
 	f.BoolVarP(&del, "delete", "d", false, "delete an alias")
 	f.StringVar(&initShell, "init", "", "print shell integration for <shell>")
 	f.BoolVarP(&version, "version", "v", false, "print version")
+	root.ValidArgsFunction = app.completeArgs
+	_ = root.RegisterFlagCompletionFunc("init", completeInit)
 	return root
 }

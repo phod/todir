@@ -245,3 +245,22 @@ func TestInitEmptyValueIsUsage(t *testing.T) {
 		t.Fatalf("code=%d err=%q", code, errs)
 	}
 }
+
+func TestInitBadShellIsUsage(t *testing.T) {
+	app, _, _ := newTestApp(t)
+	code, out, errs := run(t, app, "--init", "fish")
+	want := "tele: unsupported shell \"fish\"; supported: bash, zsh\n"
+	if code != 2 || out != "" || errs != want {
+		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
+	}
+}
+
+func TestInitZshToStdoutNoNotice(t *testing.T) {
+	app, _, _ := newTestApp(t)
+	app.StderrIsTTY = true
+	app.CdWriter = nil
+	code, out, errs := run(t, app, "--init", "zsh")
+	if code != 0 || !strings.Contains(out, "tele() {") || errs != "" {
+		t.Fatalf("code=%d err=%q out=%q", code, errs, out)
+	}
+}
