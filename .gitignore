@@ -1,2 +1,4 @@
 tele-bin
 /dist/
+.worktrees/
+.superpowers/
