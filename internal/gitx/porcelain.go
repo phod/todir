@@ -23,6 +23,9 @@ func parsePorcelain(s string) ([]Worktree, error) {
 				cur.Branch = cur.Branch[:7]
 			}
 		}
+		if cur.Bare && cur.Branch == "" {
+			cur.Branch = "(bare)"
+		}
 		cur.Main = len(wts) == 0
 		wts = append(wts, *cur)
 		cur = nil

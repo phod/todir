@@ -371,6 +371,18 @@ func TestRelWithin(t *testing.T) {
 	}
 }
 
+func TestBareWorktreeLabelled(t *testing.T) {
+	// As gitx.parsePorcelain reports a bare entry.
+	wts := []gitx.Worktree{{Path: "/srv/bare.git", Branch: "(bare)", Bare: true, Main: true}, {Path: "/srv/feat", Branch: "feat"}}
+	lines := strings.Split(strings.TrimRight(formatWorktrees(wts, 1), "\n"), "\n")
+	if got := strings.Fields(lines[0]); len(got) != 2 || got[0] != "(bare)" || got[1] != "/srv/bare.git" {
+		t.Fatalf("bare row = %q", lines[0])
+	}
+	if items := worktreeItems(wts, 1); items[0].Label != "  (bare)" {
+		t.Fatalf("bare item = %+v", items[0])
+	}
+}
+
 func TestWorktreeItemsMarkCurrent(t *testing.T) {
 	wts := []gitx.Worktree{{Path: "/r", Branch: "main"}, {Path: "/r-feature", Branch: "feature"}}
 	items := worktreeItems(wts, currentWorktreeIndex(wts, "/r-feature/sub"))

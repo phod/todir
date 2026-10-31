@@ -5,11 +5,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 func run(t *testing.T, args ...string) {
 	t.Helper()
+	t.Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
 	cmd := exec.Command("git", args...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("git %v: %v\n%s", args, err, out)
@@ -26,7 +28,7 @@ func makeRepo(t *testing.T) string {
 		t.Fatal(err)
 	}
 	run(t, "-C", main, "add", "f")
-	run(t, "-C", main, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "init")
+	run(t, "-C", main, "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "init")
 	return main
 }
 
@@ -99,6 +101,42 @@ func TestDiscoverNotRepoNonEnglishLocale(t *testing.T) {
 	_, err := Discover(dir)
 	if !errors.Is(err, ErrNotRepo) {
 		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestDiscoverBareRepoAndGitDirIsNotWorkTree(t *testing.T) {
+	bare := filepath.Join(t.TempDir(), "b.git")
+	run(t, "init", "-q", "--bare", bare)
+	main := makeRepo(t)
+	for _, dir := range []string{bare, filepath.Join(main, ".git")} {
+		if _, err := Discover(dir); !errors.Is(err, ErrNotWorkTree) {
+			t.Fatalf("%s: err = %v", dir, err)
+		}
+	}
+	if ErrNotWorkTree.Error() != "not inside a git work tree" {
+		t.Fatalf("message = %q", ErrNotWorkTree)
+	}
+}
+
+func TestFirstLineKeepsOneLine(t *testing.T) {
+	cases := map[string]string{
+		"fatal: one\nhint: two\nhint: three\n": "fatal: one",
+		"\n\n  error: x  \nmore":               "error: x",
+		"":                                     "",
+	}
+	for in, want := range cases {
+		if got := firstLine(in); got != want {
+			t.Errorf("firstLine(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestGitErrorIsOneLine(t *testing.T) {
+	main := makeRepo(t)
+	// With no remote, git push prints a multi-line explanation on stderr.
+	_, err := git(main, "push")
+	if err == nil || strings.Contains(err.Error(), "\n") || !strings.Contains(err.Error(), "No configured push destination") {
+		t.Fatalf("err = %q", err)
 	}
 }
 

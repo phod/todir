@@ -14,7 +14,19 @@ import (
 var (
 	ErrGitNotFound = errors.New("git is required for worktree aliases but was not found on PATH")
 	ErrNotRepo     = errors.New("not inside a git repository")
+	ErrNotWorkTree = errors.New("not inside a git work tree")
 )
+
+// firstLine returns the first non-empty line of git's stderr so errors stay
+// on one line.
+func firstLine(s string) string {
+	for _, l := range strings.Split(s, "\n") {
+		if l = strings.TrimSpace(l); l != "" {
+			return l
+		}
+	}
+	return ""
+}
 
 // Repo identifies a repository by its common git directory.
 type Repo struct{ CommonDir, TopLevel string }
@@ -35,11 +47,17 @@ func git(dir string, args ...string) (string, error) {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
+		full := stderr.String()
 		var ee *exec.ExitError
-		if errors.As(err, &ee) && ee.ExitCode() == 128 && strings.Contains(msg, "not a git repository") {
-			return "", ErrNotRepo
+		if errors.As(err, &ee) && ee.ExitCode() == 128 {
+			switch {
+			case strings.Contains(full, "not a git repository"):
+				return "", ErrNotRepo
+			case strings.Contains(full, "must be run in a work tree"):
+				return "", ErrNotWorkTree
+			}
 		}
+		msg := firstLine(full)
 		if msg == "" {
 			msg = err.Error()
 		}

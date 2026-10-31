@@ -38,7 +38,7 @@ func TestParsePorcelain(t *testing.T) {
 		if !wts[2].Detached || wts[2].Branch != "abc1234" {
 			t.Errorf("detached: %+v", wts[2])
 		}
-		if !wts[3].Bare || wts[3].Branch != "" {
+		if !wts[3].Bare || wts[3].Branch != "(bare)" {
 			t.Errorf("bare: %+v", wts[3])
 		}
 	}
