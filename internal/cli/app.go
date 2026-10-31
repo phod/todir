@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
 
+	"github.com/phodder/tele/internal/picker"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +39,9 @@ func Run(app *App, args []string) int {
 	root := newRoot(app)
 	root.SetArgs(args)
 	if err := root.Execute(); err != nil {
-		fmt.Fprintf(app.Stderr, "tele: %s\n", err)
+		if !errors.Is(err, picker.ErrCancelled) {
+			fmt.Fprintf(app.Stderr, "tele: %s\n", err)
+		}
 		return exitCode(err)
 	}
 	return 0

@@ -2,13 +2,60 @@ package cli
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/phodder/tele/internal/picker"
 	"github.com/phodder/tele/internal/store"
 )
+
+func TestPickAliasWithoutTTYErrors(t *testing.T) {
+	app, _, _ := newTestApp(t)
+	if code, _, errs := run(t, app, "-r", t.TempDir(), "foo"); code != 0 {
+		t.Fatalf("register: %d %q", code, errs)
+	}
+	app.StderrIsTTY = false
+	code, out, errs := run(t, app)
+	if code != 1 || out != "" || errs != "tele: interactive mode needs a terminal\n" {
+		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
+	}
+}
+
+func TestPickAliasEmptyStoreHint(t *testing.T) {
+	app, _, _ := newTestApp(t)
+	app.StderrIsTTY = true
+	app.CdWriter = &bytes.Buffer{} // shell integration loaded: no notice
+	code, out, errs := run(t, app, "-li")
+	want := "tele: no aliases registered; add one with: tele -r <path> <name>\n"
+	if code != 1 || out != "" || errs != want {
+		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
+	}
+}
+
+func TestPickWorktreeWithoutTTYErrors(t *testing.T) {
+	app, main, _ := wtFixture(t)
+	app.Cwd = main
+	app.StderrIsTTY = false
+	code, out, errs := run(t, app, "-wli")
+	if code != 1 || out != "" || errs != "tele: interactive mode needs a terminal\n" {
+		t.Fatalf("code=%d out=%q err=%q", code, out, errs)
+	}
+}
+
+func TestExitCodeCancelledIs130(t *testing.T) {
+	if got := exitCode(picker.ErrCancelled); got != 130 {
+		t.Fatalf("exitCode = %d", got)
+	}
+	if got := exitCode(fmt.Errorf("wrap: %w", picker.ErrCancelled)); got != 130 {
+		t.Fatalf("wrapped exitCode = %d", got)
+	}
+	if got := exitCode(fmt.Errorf("wrap: %w", usagef("x"))); got != 2 {
+		t.Fatalf("wrapped usage exitCode = %d", got)
+	}
+}
 
 // run executes the app with fresh stdout/stderr buffers.
 func run(t *testing.T, app *App, args ...string) (int, string, string) {

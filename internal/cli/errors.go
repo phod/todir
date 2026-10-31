@@ -1,6 +1,11 @@
 package cli
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/phodder/tele/internal/picker"
+)
 
 // UsageError marks an error caused by invalid command-line usage (exit 2).
 type UsageError struct{ Msg string }
@@ -12,11 +17,13 @@ func usagef(format string, a ...any) error {
 }
 
 func exitCode(err error) int {
-	// The 130 (cancelled) case is added in Task 9.
-	switch err.(type) {
-	case nil:
+	var ue *UsageError
+	switch {
+	case err == nil:
 		return 0
-	case *UsageError:
+	case errors.Is(err, picker.ErrCancelled):
+		return 130
+	case errors.As(err, &ue):
 		return 2
 	default:
 		return 1

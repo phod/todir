@@ -8,6 +8,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/phodder/tele/internal/gitx"
+	"github.com/phodder/tele/internal/picker"
 	"github.com/phodder/tele/internal/store"
 )
 
@@ -24,6 +25,10 @@ func (a *App) dispatch(m Mode) error {
 		return a.listAliases()
 	case KindNavigate:
 		return a.navigate(m.Alias)
+	case KindPickAlias:
+		return a.pickAlias()
+	case KindPickWorktree:
+		return a.pickWorktree(m)
 	case KindListWorktrees:
 		return a.listWorktrees(m)
 	}
@@ -143,4 +148,51 @@ func (a *App) resolveAlias(al store.Alias) (string, error) {
 		return "", fmt.Errorf("directory for alias %s does not exist: %s", al.Name, al.Path)
 	}
 	return al.Path, nil
+}
+
+func (a *App) pickAlias() error {
+	s, err := a.loadStore()
+	if err != nil {
+		return err
+	}
+	aliases := s.Sorted()
+	if len(aliases) == 0 {
+		return errors.New("no aliases registered; add one with: tele -r <path> <name>")
+	}
+	items := make([]picker.Item, 0, len(aliases))
+	for _, al := range aliases {
+		detail := al.Path
+		if al.Worktree {
+			detail += "  [worktree: " + gitx.DisplayName(al.Repo) + "]"
+		}
+		items = append(items, picker.Item{Label: al.Name, Detail: detail, Value: al.Name})
+	}
+	chosen, err := picker.Run("Aliases", items, a.Stdin, a.Stderr, a.StderrIsTTY)
+	if err != nil {
+		return err
+	}
+	return a.navigate(chosen.Value)
+}
+
+func (a *App) pickWorktree(m Mode) error {
+	if err := requireGit(); err != nil {
+		return err
+	}
+	dir, err := a.worktreeRepoDir(m.Alias)
+	if err != nil {
+		return err
+	}
+	wts, err := a.worktreeRows(dir)
+	if err != nil {
+		return err
+	}
+	items := make([]picker.Item, 0, len(wts))
+	for _, wt := range wts {
+		items = append(items, picker.Item{Label: wt.Branch, Detail: wt.Path, Value: wt.Path})
+	}
+	chosen, err := picker.Run("Worktrees", items, a.Stdin, a.Stderr, a.StderrIsTTY)
+	if err != nil {
+		return err
+	}
+	return a.emitTarget(chosen.Value)
 }
