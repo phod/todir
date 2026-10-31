@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
 	"github.com/phodder/tele/internal/picker"
 	"github.com/spf13/cobra"
@@ -28,7 +29,7 @@ func ParseCdFD(v string) (fd int, set bool, err error) {
 		return 0, false, nil
 	}
 	fd, err = strconv.Atoi(v)
-	if err != nil {
+	if err != nil || fd < 0 {
 		return 0, false, fmt.Errorf("invalid TELE_CD_FD")
 	}
 	return fd, true, nil
@@ -79,6 +80,9 @@ func newRoot(app *App) *cobra.Command {
 	root.SetOut(app.Stdout)
 	root.SetErr(app.Stderr)
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
+		if strings.Contains(err.Error(), "flag needs an argument: --init") {
+			return usagef("--init requires a shell name: bash or zsh")
+		}
 		return &UsageError{Msg: err.Error()}
 	})
 

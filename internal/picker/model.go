@@ -34,7 +34,7 @@ func NewModel(title string, items []Item) Model {
 	ti.Focus()
 
 	m := Model{title: title, input: ti, items: items}
-	if _, noColor := os.LookupEnv("NO_COLOR"); noColor {
+	if noColor(os.Getenv) {
 		m.cursorSty = lipgloss.NewStyle()
 		m.titleSty = lipgloss.NewStyle()
 		m.dimSty = lipgloss.NewStyle()
@@ -46,6 +46,10 @@ func NewModel(title string, items []Item) Model {
 	m.refilter()
 	return m
 }
+
+// noColor reports whether colour is disabled: NO_COLOR set to a non-empty
+// value (https://no-color.org).
+func noColor(getenv func(string) string) bool { return getenv("NO_COLOR") != "" }
 
 // window returns how many item rows fit: the terminal height minus the title,
 // prompt and "more" lines. Zero means no limit (height not yet known).

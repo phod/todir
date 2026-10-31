@@ -51,4 +51,19 @@ func TestParseCdFD(t *testing.T) {
 	if _, _, err := ParseCdFD("x"); err == nil {
 		t.Fatal("want error for x")
 	}
+	if _, _, err := ParseCdFD("-1"); err == nil {
+		t.Fatal("want error for -1")
+	}
+}
+
+func TestInitWithoutShellListsShells(t *testing.T) {
+	for _, args := range [][]string{{"--init"}, {"--init="}} {
+		app, out, errb := newTestApp(t)
+		if code := Run(app, args); code != 2 {
+			t.Fatalf("%v: exit = %d, want 2", args, code)
+		}
+		if got := errb.String(); got != "tele: --init requires a shell name: bash or zsh\n" || out.Len() != 0 {
+			t.Fatalf("%v: stderr = %q stdout = %q", args, got, out.String())
+		}
+	}
 }

@@ -121,6 +121,44 @@ func TestFilterResetsCursor(t *testing.T) {
 	}
 }
 
+func TestNoColorNeedsNonEmptyValue(t *testing.T) {
+	env := func(v string) func(string) string {
+		return func(k string) string {
+			if k == "NO_COLOR" {
+				return v
+			}
+			return ""
+		}
+	}
+	if noColor(env("")) {
+		t.Fatal("empty NO_COLOR must not disable colour")
+	}
+	if !noColor(env("1")) {
+		t.Fatal("NO_COLOR=1 must disable colour")
+	}
+	t.Setenv("NO_COLOR", "")
+	if !NewModel("T", nil).cursorSty.GetBold() {
+		t.Fatal("empty NO_COLOR: cursor style should be bold")
+	}
+	t.Setenv("NO_COLOR", "1")
+	if NewModel("T", nil).cursorSty.GetBold() {
+		t.Fatal("NO_COLOR=1: cursor style should be plain")
+	}
+}
+
+func TestInterruptMapsToCancelled(t *testing.T) {
+	if err := runErr(tea.ErrInterrupted); !errors.Is(err, ErrCancelled) {
+		t.Fatalf("err = %v", err)
+	}
+	if err := runErr(fmt.Errorf("wrap: %w", tea.ErrInterrupted)); !errors.Is(err, ErrCancelled) {
+		t.Fatalf("wrapped err = %v", err)
+	}
+	other := errors.New("boom")
+	if err := runErr(other); err != other {
+		t.Fatalf("other err = %v", err)
+	}
+}
+
 func many(n int) []Item {
 	out := make([]Item, n)
 	for i := range out {

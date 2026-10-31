@@ -30,11 +30,20 @@ func Run(title string, items []Item, in io.Reader, out io.Writer, isTTY bool) (I
 	p := tea.NewProgram(NewModel(title, items), tea.WithInput(in), tea.WithOutput(out))
 	final, err := p.Run()
 	if err != nil {
-		return Item{}, err
+		return Item{}, runErr(err)
 	}
 	m, ok := final.(Model)
 	if !ok {
 		return Item{}, ErrCancelled
 	}
 	return m.Result()
+}
+
+// runErr maps an external SIGINT (tea.ErrInterrupted) to ErrCancelled so it
+// exits 130 like Escape or Ctrl-C.
+func runErr(err error) error {
+	if errors.Is(err, tea.ErrInterrupted) {
+		return ErrCancelled
+	}
+	return err
 }
