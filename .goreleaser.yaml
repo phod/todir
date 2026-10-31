@@ -1,0 +1,25 @@
+version: 2
+
+builds:
+  - main: ./cmd/tele
+    binary: tele
+    goos: [darwin, linux]
+    goarch: [amd64, arm64]
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - name_template: tele_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: checksums.txt
+
+# TODO: Homebrew tap
+# brews:
+#   - repository:
+#       owner: phodder
+#       name: homebrew-tap
+#     homepage: https://github.com/phodder/tele
+#     description: Directory aliases with worktree-aware jumping
