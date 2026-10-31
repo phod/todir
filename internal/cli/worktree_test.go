@@ -13,6 +13,7 @@ import (
 
 func git(t *testing.T, args ...string) {
 	t.Helper()
+	t.Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
 	if out, err := exec.Command("git", args...).CombinedOutput(); err != nil {
 		t.Fatalf("git %v: %v\n%s", args, err, out)
 	}
@@ -28,7 +29,7 @@ func makeRepo(t *testing.T) string {
 		t.Fatal(err)
 	}
 	git(t, "-C", main, "add", "f")
-	git(t, "-C", main, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "init")
+	git(t, "-C", main, "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "init")
 	return main
 }
 
@@ -63,7 +64,7 @@ func wtFixture(t *testing.T) (app *App, main, linked string) {
 		t.Fatal(err)
 	}
 	git(t, "-C", main, "add", ".")
-	git(t, "-C", main, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "svc")
+	git(t, "-C", main, "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "svc")
 	linked = addWorktree(t, main, "feature")
 	app, _, _ = newTestApp(t)
 	return

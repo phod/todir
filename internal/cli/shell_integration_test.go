@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -38,6 +39,28 @@ func runMain(m *testing.M) int {
 type testShell struct {
 	name string // "bash" or "zsh"
 	path string // resolved path
+}
+
+// shellsForTest returns the shells to run. On darwin and linux both bash and
+// zsh must be present, so CI cannot silently lose coverage of either; on other
+// systems a missing shell is a skip.
+func shellsForTest(t *testing.T) []testShell {
+	t.Helper()
+	shells := availableShells()
+	names := map[string]bool{}
+	for _, sh := range shells {
+		names[sh.name] = true
+	}
+	if len(names) < 2 {
+		msg := fmt.Sprintf("need both bash and zsh, found %d distinct shell(s): %v", len(names), shells)
+		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+			t.Fatal(msg)
+		}
+		if len(shells) == 0 {
+			t.Skip(msg)
+		}
+	}
+	return shells
 }
 
 // availableShells returns bash and zsh binaries found on this machine,
@@ -132,10 +155,7 @@ type tele | head -1
 `
 
 func TestShellIntegrationNavigatesAndPropagatesExit(t *testing.T) {
-	shells := availableShells()
-	if len(shells) == 0 {
-		t.Skip("no bash or zsh found")
-	}
+	shells := shellsForTest(t)
 	for _, sh := range shells {
 		t.Run(sh.name+"@"+sh.path, func(t *testing.T) {
 			t.Logf("shell: %s", shellVersion(t, sh))
@@ -186,10 +206,7 @@ func TestShellIntegrationNavigatesAndPropagatesExit(t *testing.T) {
 }
 
 func TestShellIntegrationCompletionLoads(t *testing.T) {
-	shells := availableShells()
-	if len(shells) == 0 {
-		t.Skip("no bash or zsh found")
-	}
+	shells := shellsForTest(t)
 	for _, sh := range shells {
 		t.Run(sh.name+"@"+sh.path, func(t *testing.T) {
 			t.Logf("shell: %s", shellVersion(t, sh))
